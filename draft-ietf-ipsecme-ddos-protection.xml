@@ -15,7 +15,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="yes" ?>
 <?rfc sortrefs="yes" ?>
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-xx" category="std">
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-01" category="std">
   <front>
     <title abbrev="DDoS Protection for IKE">Protecting Internet Key Exchange (IKE) Implementations from Distributed Denial of Service Attacks</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
@@ -34,13 +34,13 @@
       <organization abbrev="ELVIS-PLUS">ELVIS-PLUS</organization>
       <address>
         <postal>
-          <street>PO Box 81</streen>
+          <street>PO Box 81</street>
           <city>Moscow (Zelenograd)</city>
           <code>124460</code>
           <country>Russian Federation</country>
         </postal>
-        <email>svan@elvis.ru</email>
         <phone>+7 495 276 0211</phone>
+        <email>svan@elvis.ru</email>
       </address>
     </author>
     <date year="2015"/>
@@ -171,6 +171,15 @@
       <t> The difficulty level should be set by balancing the requirement to minimize the latency for legitimate initiators and making things difficult for attackers. A good rule of thumb is for taking about 1 second to solve the puzzle. A typical initiator or bot-net member in 2014 can perform slightly less than a million hashes per second per core, so setting the difficulty level to n=20 is a good compromise. It should be noted that mobile initiators, especially phones are considerably weaker than that. Implementations should allow administrators to set the difficulty level, and/or be able to set the difficulty level dynamically in response to load.</t>
       <t> Initiators should set a maximum difficulty level beyond which they won't try to solve the puzzle and log or display a failure message to the administrator or user.</t>
     </section>
+
+    <section title="Using Puzzles in the Protocol">
+        <section anchor="negotiation" title="Puzzle Algorithm Negotiation">
+            <t>Cryptographic algorithm agility is considered an important feature for modern protocols (<xref target="alg-agility" />). This feature ensures that protocol doesn't rely on a single build-in set of cryptographic algorithms, but has a means to replace one set with another and negotiate new set with the peer. IKEv2 fully supports cryptographic algorithm agility for its core operations.</t>
+            <t>To support this feature in case of puzzles the algorithm, that is used to compute puzzle, needs to be negotiated during IKE_SA_INIT exchange. The negotiation is done as follows. The initial request message sent by Initiator contains SA payload with the list of transforms the Initiator supports and is willing to use in the IKE SA being established. If Responder continues with a puzzle, it must also inform the Initiator which algorithm to use to solve the puzzle. For this purpose the Responder parses received SA payload and finds mutually supported set of transforms of type PRF. It selects most preferred transform from this set and includes it into the PUZZLE notification that is sent back in the response message. There is no requirement that the PRF selected for puzzles be the same, as the PRF that is negotiated later for the use in core IKE SA crypto operations. If there are no mutually supported PRFs, then negotiation will fail anyway and there is no reason to return a puzzle. In this case the Responder returns NO_PROPOSAL_CHOSEN notification. Note that PRF is a mandatory transform type for IKE SA (see Sections 3.3.2 and 3.3.3 of <xref target="RFC7296" />) and at least one transform of this type must always be present in SA payload in IKE_SA_INIT exchange.</t>
+        </section>
+
+    </section>
+
     <section anchor="security" title="Security Considerations">
       <t> To be added.</t>
     </section>
@@ -242,6 +251,18 @@
           <date year='2008' month='October' />
         </front>
         <format type='PDF' target="https://bitcoin.org/bitcoin.pdf" />
+      </reference>
+      <reference anchor='alg-agility'>
+        <front>
+          <title>Guidelines for Cryptographic Algorithm Agility</title>
+          <author initials='R' surname='Housley' fullname='Russ Housley'>
+            <organization />
+          </author>
+          <date month='December' day='29' year='2014' />
+          <abstract><t>Many IETF protocols use cryptographic algorithms to provide confidentiality, integrity, or non-repudiation.  Communicating peers must support the same set of cryptographic algorithms for these mechanisms to work properly.  This memo provides guidelines to ensure that protocols have the ability to migrate from one algorithm suite to another over time.</t></abstract>
+        </front>
+        <seriesInfo name='Internet-Draft' value='draft-iab-crypto-alg-agility-02' />
+        <format type='TXT' target='http://www.ietf.org/internet-drafts/draft-iab-crypto-alg-agility-02.txt' />
       </reference>
     </references>
     <!-- ====================================================================== -->
