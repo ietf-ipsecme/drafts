@@ -1,21 +1,23 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type='text/xsl' href='./rfc2629.xslt' ?>
 
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY rfc2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY rfc5723 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.5723.xml">
+<!ENTITY rfc7296 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7296.xml">
+]>
+
 <?rfc toc="yes"?>
-<?rfc symrefs="yes"?>
-<?rfc compact="yes" ?>
-<?rfc sortrefs="yes" ?>
 <?rfc strict="yes" ?>
 <?rfc linkmailto="yes" ?>
-<!DOCTYPE rfc SYSTEM "rfc2629.dtd" >
-
-<?xml-stylesheet type='text/xsl' href='./rfc2629.xslt' ?>
-
 <?rfc symrefs="yes"?>
 <?rfc compact="yes" ?>
-<?rfc subcompact="yes" ?>
-<?rfc sortrefs="yes" ?>
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-01" category="std">
+<?rfc subcompact="no" ?>
+<?rfc sortrefs="no" ?>
+<?rfc rfcedstyle="yes"?>
+
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-xx" category="std">
+
   <front>
     <title abbrev="DDoS Protection for IKE">Protecting Internet Key Exchange (IKE) Implementations from Distributed Denial of Service Attacks</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
@@ -164,6 +166,16 @@
       <t> When Cookies are activated for all requests and the attacker is still managing to consume too many resources, the Responder MAY increase the difficulty of puzzles imposed on IKE_SA_INIT requests coming from suspicious nodes/prefixes. It should still be doable by all legitimate peers, but it can degrade experience, for example by taking up to 10 seconds to calculate the cookie extension.</t>
       <t> If the load on the Responder is still too great, and there are many nodes causing multiple half-open SAs or IKE_AUTH failures, the Responder MAY impose hard limits on those nodes.</t>
       <t> If it turns out that the attack is very widespread and the hard caps are not solving the issue, a puzzle MAY be imposed on all Initiators. Note that this is the last step, and the Responder should avoid this if possible.</t>
+      <section anchor="resumption" title="Session Resumption">
+        <t>When the Responder is under attack, it MAY choose to prefer previously authenticated 
+        peers who present a session resumption <xref target="RFC5723"/> ticket. The Responder 
+        MAY require such Initiators to pass a return routability check by including the COOKIE 
+        notification in the IKE_SESSION_RESUME response message, as allowed by RFC 5723, Sec. 4.3.2. 
+        Note that the Responder SHOULD cache tickets for a short time to reject reused tickets 
+        (Sec. 4.3.1), and therefore there should be no issue of half-open SAs resulting from 
+        replayed IKE_SESSION_RESUME messages
+        </t>
+      </section>
     </section>
     <section anchor="ops_cons" title="Operational Considerations">
       <t> [This section needs a lot of expanding]</t>
@@ -172,12 +184,357 @@
       <t> Initiators should set a maximum difficulty level beyond which they won't try to solve the puzzle and log or display a failure message to the administrator or user.</t>
     </section>
 
-    <section title="Using Puzzles in the Protocol">
-        <section anchor="negotiation" title="Puzzle Algorithm Negotiation">
-            <t>Cryptographic algorithm agility is considered an important feature for modern protocols (<xref target="alg-agility" />). This feature ensures that protocol doesn't rely on a single build-in set of cryptographic algorithms, but has a means to replace one set with another and negotiate new set with the peer. IKEv2 fully supports cryptographic algorithm agility for its core operations.</t>
-            <t>To support this feature in case of puzzles the algorithm, that is used to compute puzzle, needs to be negotiated during IKE_SA_INIT exchange. The negotiation is done as follows. The initial request message sent by Initiator contains SA payload with the list of transforms the Initiator supports and is willing to use in the IKE SA being established. If Responder continues with a puzzle, it must also inform the Initiator which algorithm to use to solve the puzzle. For this purpose the Responder parses received SA payload and finds mutually supported set of transforms of type PRF. It selects most preferred transform from this set and includes it into the PUZZLE notification that is sent back in the response message. There is no requirement that the PRF selected for puzzles be the same, as the PRF that is negotiated later for the use in core IKE SA crypto operations. If there are no mutually supported PRFs, then negotiation will fail anyway and there is no reason to return a puzzle. In this case the Responder returns NO_PROPOSAL_CHOSEN notification. Note that PRF is a mandatory transform type for IKE SA (see Sections 3.3.2 and 3.3.3 of <xref target="RFC7296" />) and at least one transform of this type must always be present in SA payload in IKE_SA_INIT exchange.</t>
+    <section anchor="usingpuzzles" title="Using Puzzles in the Protocol">
+        <section anchor="ikesainit" title="Puzzles in IKE_SA_INIT Exchange">
+            <t>IKE initiator indicates the desire to create new IKE SA by sending 
+            IKE_SA_INIT request message. The message may optionally contain 
+            COOKIE notification if this is a repeated request after the responder
+            asked initiator to return a cookie.</t>
+            <figure align="center">
+                <artwork align="left"><![CDATA[
+HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
+            ]]></artwork>
+            </figure>
+            <t>According to the plan, described in <xref target="plan"/>, IKE responder 
+            should monitor incoming requests to detect whether it is under attack.
+            If the responder learns that (D)DoS attack is likely to be in progress, 
+            then it either requests the initiator to return cookie or, 
+            if the volume is so high, that puzzles need to be used for defense, 
+            it requests the initiator to solve the puzzle. 
+            </t>
+            <t>The responder MAY choose to process some fraction of IKE_SA_INIT requests 
+            without presenting a puzzle even being under attack to allow legacy clients, 
+            that don't support puzzles, to have chances be served. The decision whether to process
+            any particular request must be probabilistic, with the probability
+            depending on the responder's load (i.e. on the volume of the attack).
+            Only those requests, that contain COOKIE notification, must participate in this lottery.
+            In other words, the responder MUST first perform return routability
+            check before allowing any legacy client to be served if it is under attack.
+            See <xref target="analyzerequest"/> for details. 
+            </t>
+            <section anchor="givepuzzle" title="Presenting Puzzle">
+                <t>If the responder takes a decision to use puzzles, then it includes
+                two notifications in its response message - the COOKIE notification and
+                the PUZZLE notification. The format of the PUZZLE notification 
+                is described in <xref target="puzzlentf"/>.
+                </t>
+                <figure align="center">
+                    <artwork align="left"><![CDATA[
+                          <--   HDR, N(COOKIE), N(PUZZLE), [V+][N+]
+                    ]]></artwork>
+                </figure>
+                <t>The presence of these notifications in IKE_SA_INIT response message 
+                indicates to the initiator that it should solve the puzzle to get better 
+                chances to be served.
+                </t>
+                <section anchor="diflevel" title="Selecting Puzzle Difficulty Level">
+                    <t>The PUZZLE notification contains the difficulty level of the puzzle - 
+                    the minimum number of trailing zero bits that the result of PRF 
+                    must contain. In diverse environments it is next to impossible for the responder
+                    to set any specific difficulty level that will result in roughly
+                    the same amount of work for all initiators, because computation
+                    power of different initiators may vary by the order of magnitude, or even more.
+                    The responder may set difficulty level to 0, meaning that the initiator
+                    is requested to spend as much power to solve puzzle, as it can afford.
+                    In this case no specific number of trailing zero bits is required 
+                    from the initiator, however the more bits initiator is able to get,
+                    the higher chances it will have to be served by the responder.
+                    In diverse environments it is RECOMMENDED that the initiator sets
+                    difficulty level to 0.
+                    </t>
+                    <t>If the responder sets non-zero difficulty level, then the level should be 
+                    determined by analyzing the volume of the attack. The responder MAY set different 
+                    difficulty levels to different requestd depending on the IP address 
+                    the request has come from.
+                    </t>
+                </section>
+                <section anchor="negotiation" title="Puzzle Algorithm Selection">
+                    <t>The PUZZLE notification also contains identificator of the algorithm, 
+                    that must be used by initiator in puzzle solution. 
+                    </t> 
+                    <t>Cryptographic algorithm agility is considered an important feature 
+                    for modern protocols (<xref target="ALG-AGILITY"/>). This feature ensures 
+                    that protocol doesn't rely on a single build-in set of cryptographic algorithms, 
+                    but has a means to replace one set with another and negotiate new set with the peer. 
+                    IKEv2 fully supports cryptographic algorithm agility for its core operations.
+                    </t>
+                    <t>To support this feature in case of puzzles the algorithm, that is used 
+                    to compute puzzle, needs to be negotiated during IKE_SA_INIT exchange. 
+                    The negotiation is done as follows. The initial request message sent by initiator 
+                    contains SA payload with the list of transforms the initiator supports 
+                    and is willing to use in the IKE SA being established. The responder parses 
+                    received SA payload and finds mutually supported set of transforms of type PRF. 
+                    It selects most preferred transform from this set and includes it into the PUZZLE 
+                    notification. There is no requirement that the PRF selected for puzzles be the same, 
+                    as the PRF that is negotiated later for the use in core IKE SA crypto operations. 
+                    If there are no mutually supported PRFs, then negotiation will fail anyway 
+                    and there is no reason to return a puzzle. In this case the responder returns 
+                    NO_PROPOSAL_CHOSEN notification. Note that PRF is a mandatory transform type 
+                    for IKE SA (see Sections 3.3.2 and 3.3.3 of <xref target="RFC7296"/>) 
+                    and at least one transform of this type must always be present in SA payload 
+                    in IKE_SA_INIT exchange.
+                    </t>
+                </section>
+                <section anchor="compcookie" title="Generating Cookie">
+                    <t>If responder supports puzzles then cookie should be computed in such a manner, 
+                    that the responder is able to learn some important information from the sole cookie, 
+                    when it is returned back by initiator. In particular - the responder 
+                    should be able to learn the following information:
+                    <list style="symbols">
+                        <t>Whether the puzzle was given to the initiator 
+                        or only the cookie was requested.</t>
+                        <t>The difficulty level of the puzzle given to the initiator.</t>
+                        <t>The number of consecutive puzzles given to the initiator.</t>
+                        <t>The amount of time the initiator spent to solve the puzzles. 
+                        This can be calculated if the cookie is timestamped.</t>
+                    </list>
+                    This information helps the responder to make a decision whether 
+                    to serve this request or demand more work from the initiator.
+                    </t>
+                    <t>One possible approach to get this information is to encode it in the cookie. 
+                    The format of such encoding is a local matter of responder, as 
+                    the cookie would remain an opaque blob to the initiator. If this information
+                    is encoded in the cookie, then the responder MUST make it integrity
+                    protected, so that any intended or accidental alteration of this
+                    information in returned cookie is detectable. So, the cookie would
+                    be generated as:</t>
+                    <figure align="center">
+                        <artwork align="left"><![CDATA[
+Cookie = <VersionIDofSecret> | <AdditionalInfo> | 
+                  Hash(Ni | IPi | SPIi | <AdditionalInfo> | <secret>)
+                    ]]></artwork>
+                    </figure>
+                    <t>Alternatively the responder may continue to generate cookie as suggested in
+                    Section 2.6 of <xref target="RFC7296"/>, but associate the additional information,
+                    that would be stored locally, with the particular version of the secret.
+                    In this case the responder should have different secret for every combination 
+                    of difficulty level and number of consecutive puzzles, and should change 
+                    the secrets periodically, keeping a few previous versions, to be able to calculate 
+                    how long ago the cookie was generated.
+                    </t>
+                    <t>The responder may also combine these approaches. 
+                    This document doesn't mandate how the responder learns this information
+                    from the cookie.
+                    </t>
+                </section>
+            </section>
+            <section anchor="solvepuzzle" title="Solving Puzzle">
+                <t>If initiator receives puzzle but it doesn't support puzzles,
+                then it will ignore PUZZLE notification as unrecognized status notification 
+                (in accordance to Section 3.10.1 of <xref target="RFC7296"/>). 
+                The initiator also MAY ignore puzzle if it is not willing to spend resources 
+                to solve puzzle of requested difficulty, even if it supports puzzles. In both cases 
+                the initiator acts as described in Section 2.6 of <xref target="RFC7296"/> - it 
+                restarts the request and includes the received COOKIE notification into it.
+                The responder should be able to distinguish the situation when it just requested
+                a cookie from the situation when the puzzle was given to the initiator,
+                but the initiator for some reason ignored it. 
+                </t>
+                <t>If the received message contains PUZZLE notification, but doesn't contain 
+                cookie, then this message is malformed, because it requests to solve the puzzle, 
+                but doesn't provide enough information to do it. In this case the initiator 
+                SHOULD resend IKE_SA_INIT request. If this situation repeats several times, 
+                then it means that something is wrong and IKE SA cannot be established.
+                </t>
+                <t>If initiator supports puzzles and is ready to deal with them, then it tries 
+                to solve the given puzzle. After the puzzle is solved the initiator restarts the request 
+                and returns the puzzle solution in a new payload called Puzzle Solution payload 
+                (denoted as PS, see <xref target="puzzlesolutionpld"/>) along with the 
+                received COOKIE notification back to the responder.
+                </t>
+                <figure align="center">
+                    <artwork align="left"><![CDATA[
+HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
+                ]]></artwork>
+                </figure>
+                <section anchor="comppuzzleinit" title="Computing Puzzle in IKE_SA_INIT Exchange">
+                    <!-- This section should explain how puzzle is calculated in IKE_SA_INIT - i.e.
+                    find K so that S=PRF(K,cookie) has requested number of triling zero bits.
+                    It should be clear that it is cookie that is used in as data PRF,
+                    unlike puzzle calculation in IKE_AUTH. -->
+                    <t>To be added.</t>
+                </section>
+            </section>
+            <section anchor="analyzerequest" title="Analyzing Repeated Request">
+                <t>The received request must at least contain COOKIE notification. 
+                Otherwise it is an initial request and it must be processed according to 
+                <xref target="ikesainit"/>. First, the cookie MUST be checked for validity. 
+                If the cookie is invalid then the request is treated
+                as initial and is processed according to <xref target="ikesainit"/>.
+                If the cookie is valid then some important information is learned
+                from it or from local state based on identifier of the cookie's secret
+                (see <xref target="compcookie"/> for details).
+                This information would allow the responder to sort out incoming requests,
+                giving more priority to those of them, which were created spending more 
+                initiator's resources.
+                </t>
+                <t>First, the responder determines if it requested only a cookie,
+                or presented a puzzle to the initiator. If no puzzle was given,
+                then it means that at the time the responder requested a cookie
+                it didn't detect the (D)DoS attack or the attack volume was low. In this case
+                the received request message must not contain Puzzle Solution payload,
+                and this payload MUST be ignored if for any reason the message contains it.
+                Since no puzzle was given, the responder marks the request with the lowest
+                priority since the initiator spent a little resources creating it.
+                </t>
+                <t>If the responder learns from the cookie that the puzzle was given 
+                to the initiator, then it looks for the Puzzle Solution payload to 
+                determine whether its request to solve the puzzle was honored or not.
+                If the incoming message doesn't contain PS payload, then
+                it means that the initiator either doesn't support puzzles or doesn't
+                want to deal with them. In either case the request is marked with the
+                lowest priority since the initiator spent a little resources creating it.
+                </t>
+                <t>If PS payload is found in the message then the responder MUST verify 
+                the puzzle solution that it contains. The result must contain the
+                requested number of zero bits (that is also learned from the cookie,
+                as well as the PRF algorithm used in puzzle solution). If the result of 
+                the solution contais fewer bits, than were requested, then initiator
+                spent less resources, than expected by the responder. This request
+                is marked with the lowest priority.
+                </t>
+                <t>If the initiator provided the solution for the puzzle satisfying the requested 
+                difficulty level, or if the responder didn't indicate any particular difficulty 
+                level (by requesting zero level) and the initiator was free to select any
+                difficulty level it can afford, then the priority of the request is calculated
+                based on the following considerations.
+                <list style="symbols">
+                    <t>The higher zero bits the initiator got, 
+                    the higher priority its request should achieve.</t>
+                    <t>The more consecutive puzzles the initiator solved (it must be
+                    learned from the cookie), the higher priority its request should achieve.</t>
+                    <t>The more time the initiator spent solving the puzzles (it must be
+                    learned from the cookie), the higher priority its request should achieve.</t>
+                </list>
+                After the priority of the request is determined the final decision whether 
+                to serve it or not is made.
+                </t>
+            </section>
+            <section anchor="decision" title="Making Decision whether to Serve the Request">
+                <t>The responder decides what to do with the request based on its
+                priority and responder's current load. There are three possible actions:
+                <list style="symbols">
+                    <t>Accept request.</t>
+                    <t>Reject request.</t>
+                    <t>Demand more work from initiator by giving it new puzzle.</t>
+                </list>
+                The responder SHOULD accept incoming request if its priority is high - 
+                it means that the initiator spent quite a lot of resources.
+                The responder MAY also accept some of low-priority requests where
+                the initiators don't support puzzles. The percentage of accepted
+                legacy requests depends on the responder's current load.
+                </t>
+                <t>If initiator solved the puzzle, but didn't spend much resources
+                for it (the selected puzzle difficulty level appeared to be low and the initiator
+                solved it quickly), then the responder SHOULD give it another puzzle.
+                The more puzzles the initiator solve the higher would be its chances
+                ro be served.</t>
+                <t>The details of how the responder takes decision on any particular
+                request are implementation dependant. The responder can collect all the
+                incoming requests for some short period of time, sort them out 
+                based on their priority, calculate the number of alailable memory
+                slots for half-open IKE SAs and then serve that number of the requests
+                from the head of the sorted list. The rest of requests can be either discarded
+                or responded to with new puzzles.
+                </t>
+                <t>Alternatively the responder may decide whether to accept every
+                incoming request with some kind of lottery, taking into account
+                its priority and the available resources.</t>
+            </section>
         </section>
+        <section anchor="ikeauth" title="Puzzles in IKE_AUTH Exchange">
+            <t>To be added.</t>
+            <section anchor="comppuzzleauth" title="Computing Puzzle in IKE_AUTH Exchange">
+                <t>To be added.</t>
+            </section>
+        </section>
+    </section>
+    <section anchor="dosprotikesa" title="DoS Protection after IKE SA is created">
+        <t>Once IKE SA is created there is usually no much traffic over it. In most cases this traffic 
+        consists of exchanges aimed to create additional Child SAs, rekey or delete them 
+        and check the liveness of the peer. With a typical setup and typical Child SA lifetimes 
+        there must be no more than a few such exchanges in a minute, often less.
+        Some of these exchanges require relatively little resources (like liveness check),
+        while others may be resourse consuming (like creating or rekeying Child SA with
+        Diffie-Hellman exchange).</t>
 
+        <t>Since any endpoint can initiate new exchange, there is a possibility that a peer
+        would initiate too many exchanges, that could exhaust host resources. 
+        For example the peer can perform endless continuous Child SA rekeying or create 
+        overwhelming number of Child SAs with the same Traffic Selectors etc.
+        Such behaviour may be caused by buggy implementation, misconfiguration or be intentional.
+        The latter becomes more real threat if the peer uses NULL Authentication, described
+        in <xref target="NULL-AUTH"/>. In this case the peer remains anonymous, that allow 
+        it to escape any resposibility for its actions. 
+        </t>
+
+        <t>The following recommendations for defense against possible DoS attacks after
+        IKE SA is established are mostly intended for implementations that allow
+        unauthenticated IKE sessions. However they may also be useful in other cases.
+        <list style="symbols">
+            <t>If the IKEv2 window size is greater than one, then the peer could initiate multiple
+            simultaneous exchanges, that would potentially increase host resourse consumption.
+            Since currently there is no way in IKEv2 to decrease window size once it was increased 
+            (see Section 2.3 of <xref target="RFC7296"/>), the window size cannot be dynamically 
+            adjusted depending on the load. For that reason if is NOT RECOMMENDED to ever increase 
+            IKEv2 window size above its default value of one if the peer uses NULL Authentication.
+            </t>
+            <t>If the peer initiates requests to rekey IKE SA or Child SA too often, implementations
+            can respond to some of these requests with the TEMPORARY_FAILURE notification,
+            indicating that the request should be retried after some period of time.
+            </t>
+            <t>If the peer creates too many Child SA with the same or overlapping Traffic Selectors,
+            implementations can respond with the NO_ADDITIONAL_SAS notification.
+            </t>
+            <t>If the peer initiates too many exchanges of any kind, implementations can
+            introduce artificial delay before responding to request messages. This delay
+            would decrease the rate the implementation need to process requests from 
+            any particular peer, making possible to process requests from the others.
+            The delay should not be too long not to cause IKE SA to be deleted on the other end
+            due to timeout. It is believed that a few seconds is enough. Note, that 
+            if the responder receives retransmissions of the request message during 
+            the delay period, the retransmitted messages should be silently discarded.
+            </t>
+            <t>If these counter-measures are inefficient, implementations can
+            delete IKE SA with an offending peer by sending Delete Payload.
+            </t>
+        </list>
+        </t>
+    </section>
+    <section title="Payload Formats">
+        <section anchor="puzzlentf" title="PUZZLE Notification">
+            <figure align="center">
+                <artwork align="left"><![CDATA[
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Next Payload  |C|  RESERVED   |         Payload Length        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Protocol ID(=0)| SPI Size (=0) |      Notify Message Type      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              PRF              |  Difficulty   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            ]]></artwork>
+            </figure>
+            <t><list style="symbols">
+                <t>Protocol ID (1 octet) - MUST be 0.</t>
+                <t>SPI Size (1 octet) - MUST be 0, meaning no Security Parameter Index (SPI) is present.</t>
+                <t>Notify Message Type (2 octets) - MUST be &lt;TBA by IANA&gt;, the value assigned for the
+                PUZZLE notification.</t>
+                <t>PRF (2 octets) - Transform ID of the PRF algorithm that must be used to solve 
+                the puzzle. Readers should refer to the section "Transform Type 2 - Pseudo-random 
+                Function Transform IDs" in <xref target="IKEV2-IANA"/> for the list of possible values.
+                </t>
+                <t>Difficulty (1 octet) - Difficulty Level of the puzzle. Specifies minimum number 
+                of trailing zero bit, that the result of PRF must contain.
+                Value 0 means that the responder doesn't request any specific difficulty
+                level and the initiator is free to select appropriate difficulty level of its own.
+                </t>
+            </list></t>
+        </section>
+        <section anchor="puzzlesolutionpld" title="Puzzle Solution Payload">
+            <t>To be added.</t>
+        </section>
     </section>
 
     <section anchor="security" title="Security Considerations">
@@ -190,55 +547,19 @@
   <!-- ====================================================================== -->
   <back>
     <references title="Normative References"> 
-      <reference anchor='RFC2119'>
+      &rfc2119;
+      &rfc7296;
+      <reference anchor="IKEV2-IANA" target="http://www.iana.org/assignments/ikev2-parameters">
         <front>
-          <title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
-          <author initials='S.' surname='Bradner' fullname='Scott Bradner'>
-            <organization>Harvard University</organization>
-            <address>
-              <postal>
-                <street>1350 Mass. Ave.</street>
-                <street>Cambridge</street>
-                <street>MA 02138</street>
-              </postal>
-              <phone>- +1 617 495 3864</phone>
-              <email>sob@harvard.edu</email>
-            </address>
+          <title>Internet Key Exchange Version 2 (IKEv2) Parameters</title>
+          <author initials="" surname="" fullname="">
+            <organization />
           </author>
-          <date year='1997' month='March' />
-          <area>General</area>
-          <keyword>keyword</keyword>
         </front>
-        <seriesInfo name='BCP' value='14' />
-        <seriesInfo name='RFC' value='2119' />
-        <format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
-        <format type='HTML' octets='16553' target='http://tools.ietf.org/html/rfc2119' />
-      </reference>
-      <reference anchor="RFC7296">
-        <front>
-          <title>Internet Key Exchange Protocol Version 2 (IKEv2)</title>
-          <author initials="T." surname="Kivinen" fullname="Tero Kivinen">
-            <organization/>
-          </author>
-          <author initials="C." surname="Kaufman" fullname="C. Kaufman">
-            <organization/>
-          </author>
-          <author initials="P." surname="Hoffman" fullname="P. Hoffman">
-            <organization/>
-          </author>
-          <author initials="Y." surname="Nir" fullname="Y. Nir">
-            <organization/>
-          </author>
-          <author initials="P." surname="Eronen" fullname="P. Eronen">
-            <organization/>
-          </author>
-          <date year="2014" month="October"/>
-        </front>
-        <seriesInfo name="RFC" value="7296"/>
-        <format type="TXT" target="http://www.rfc-editor.org/rfc/rfc7296.txt"/>
       </reference>
     </references>
     <references title="Informative References"> 
+      &rfc5723;
       <reference anchor='bitcoins' target="https://bitcoin.org/bitcoin.pdf">
         <front>
           <title>Bitcoin: A Peer-to-Peer Electronic Cash System</title>
@@ -252,7 +573,7 @@
         </front>
         <format type='PDF' target="https://bitcoin.org/bitcoin.pdf" />
       </reference>
-      <reference anchor='alg-agility'>
+      <reference anchor='ALG-AGILITY'>
         <front>
           <title>Guidelines for Cryptographic Algorithm Agility</title>
           <author initials='R' surname='Housley' fullname='Russ Housley'>
@@ -263,6 +584,22 @@
         </front>
         <seriesInfo name='Internet-Draft' value='draft-iab-crypto-alg-agility-02' />
         <format type='TXT' target='http://www.ietf.org/internet-drafts/draft-iab-crypto-alg-agility-02.txt' />
+      </reference>
+      <reference anchor='NULL-AUTH'>
+        <front>
+          <title>The NULL Authentication Method in IKEv2 Protocol</title>
+            <author initials='V' surname='Smyslov' fullname='Valery Smyslov'>
+              <organization />
+            </author>
+            <author initials='P' surname='Wouters' fullname='Paul Wouters'>
+              <organization />
+          </author>
+          <date month='January' day='13' year='2015' />
+          <abstract><t>This document specifies the NULL Authentication Method and the ID_NULL Identification Payload ID Type for the IKEv2 Protocol.  This allows two IKE peers to establish single-side authenticated or mutual un-authenticated IKE sessions for those use cases where a peer is unwilling or unable to authenticate itself.  This ensures IKEv2 can be used for Opportunistic Security (also known as Opportunsitic Encryption) to defend against Pervasive Monitoring attacks without the need to sacrifice anonimity.</t></abstract>
+        </front>
+        <seriesInfo name='Internet-Draft' value='draft-ietf-ipsecme-ikev2-null-auth-02' />
+        <format type='TXT'
+                target='http://www.ietf.org/internet-drafts/draft-ietf-ipsecme-ikev2-null-auth-02.txt' />
       </reference>
     </references>
     <!-- ====================================================================== -->
