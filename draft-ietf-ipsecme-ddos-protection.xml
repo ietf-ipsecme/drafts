@@ -5,6 +5,7 @@
 <!ENTITY rfc2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY rfc5723 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.5723.xml">
 <!ENTITY rfc7296 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7296.xml">
+<!ENTITY rfc7383 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7383.xml">
 ]>
 
 <?rfc toc="yes"?>
@@ -212,7 +213,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
             check before allowing any legacy client to be served if it is under attack.
             See <xref target="analyzerequest"/> for details. 
             </t>
-            <section anchor="givepuzzle" title="Presenting Puzzle">
+            <section anchor="givepuzzleinit" title="Presenting Puzzle">
                 <t>If the responder takes a decision to use puzzles, then it includes
                 two notifications in its response message - the COOKIE notification and
                 the PUZZLE notification. The format of the PUZZLE notification 
@@ -227,7 +228,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                 indicates to the initiator that it should solve the puzzle to get better 
                 chances to be served.
                 </t>
-                <section anchor="diflevel" title="Selecting Puzzle Difficulty Level">
+                <section anchor="diflevelinit" title="Selecting Puzzle Difficulty Level">
                     <t>The PUZZLE notification contains the difficulty level of the puzzle - 
                     the minimum number of trailing zero bits that the result of PRF 
                     must contain. In diverse environments it is next to impossible for the responder
@@ -248,7 +249,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     the request has come from.
                     </t>
                 </section>
-                <section anchor="negotiation" title="Puzzle Algorithm Selection">
+                <section anchor="negotiation" title="Selecting Puzzle Algorithm">
                     <t>The PUZZLE notification also contains identificator of the algorithm, 
                     that must be used by initiator in puzzle solution. 
                     </t> 
@@ -318,7 +319,7 @@ Cookie = <VersionIDofSecret> | <AdditionalInfo> |
                     </t>
                 </section>
             </section>
-            <section anchor="solvepuzzle" title="Solving Puzzle">
+            <section anchor="solvepuzzleinit" title="Solving Puzzle and Returning the Solution">
                 <t>If initiator receives puzzle but it doesn't support puzzles,
                 then it will ignore PUZZLE notification as unrecognized status notification 
                 (in accordance to Section 3.10.1 of <xref target="RFC7296"/>). 
@@ -347,12 +348,20 @@ Cookie = <VersionIDofSecret> | <AdditionalInfo> |
 HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 ]]></artwork>
                 </figure>
-                <section anchor="comppuzzleinit" title="Computing Puzzle in IKE_SA_INIT Exchange">
-                    <!-- This section should explain how puzzle is calculated in IKE_SA_INIT - i.e.
-                    find K so that S=PRF(K,cookie) has requested number of triling zero bits.
-                    It should be clear that it is cookie that is used in as data PRF,
-                    unlike puzzle calculation in IKE_AUTH. -->
-                    <t>To be added.</t>
+                <section anchor="comppuzzleinit" title="Computing Puzzle">
+                    <t>General principals of constructing puzzles in IKEv2 are described 
+                    in <xref target="puzzles"/>. They can be summarized as follows: given
+                    unpredictable string S and pseudo-random function PRF find the key K for
+                    that PRF so that the result of PRF(K,S) has the specified number 
+                    of trailing zero bits.
+                    </t>
+                    <t>In the IKE_SA_INIT exchange it is the cookie that plays the role of 
+                    unpredictable string S. In other words, in IKE_SA_INIT the task for 
+                    IKE initiator is to find the key K for the agreed upon PRF such that 
+                    the result of PRF(K,cookie) has sufficient number of trailing zero bits.
+                    Only the content of the COOKIE notification is used in puzzle
+                    calculation, i.e. the header of the Notification payload is not included.
+                    </t>
                 </section>
             </section>
             <section anchor="analyzerequest" title="Analyzing Repeated Request">
@@ -372,13 +381,13 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 or presented a puzzle to the initiator. If no puzzle was given,
                 then it means that at the time the responder requested a cookie
                 it didn't detect the (D)DoS attack or the attack volume was low. In this case
-                the received request message must not contain Puzzle Solution payload,
+                the received request message must not contain the PS payload,
                 and this payload MUST be ignored if for any reason the message contains it.
                 Since no puzzle was given, the responder marks the request with the lowest
                 priority since the initiator spent a little resources creating it.
                 </t>
                 <t>If the responder learns from the cookie that the puzzle was given 
-                to the initiator, then it looks for the Puzzle Solution payload to 
+                to the initiator, then it looks for the PS payload to 
                 determine whether its request to solve the puzzle was honored or not.
                 If the incoming message doesn't contain PS payload, then
                 it means that the initiator either doesn't support puzzles or doesn't
@@ -386,14 +395,14 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 lowest priority since the initiator spent a little resources creating it.
                 </t>
                 <t>If PS payload is found in the message then the responder MUST verify 
-                the puzzle solution that it contains. The result must contain the
-                requested number of zero bits (that is also learned from the cookie,
+                the puzzle solution that it contains. The result must contain at least the
+                requested number of trailing zero bits (that is also learned from the cookie,
                 as well as the PRF algorithm used in puzzle solution). If the result of 
-                the solution contais fewer bits, than were requested, then initiator
+                the solution contais fewer bits, than were requested, it means that initiator
                 spent less resources, than expected by the responder. This request
                 is marked with the lowest priority.
                 </t>
-                <t>If the initiator provided the solution for the puzzle satisfying the requested 
+                <t>If the initiator provided the solution to the puzzle satisfying the requested 
                 difficulty level, or if the responder didn't indicate any particular difficulty 
                 level (by requesting zero level) and the initiator was free to select any
                 difficulty level it can afford, then the priority of the request is calculated
@@ -416,7 +425,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 <list style="symbols">
                     <t>Accept request.</t>
                     <t>Reject request.</t>
-                    <t>Demand more work from initiator by giving it new puzzle.</t>
+                    <t>Demand more work from initiator by giving it a new puzzle.</t>
                 </list>
                 The responder SHOULD accept incoming request if its priority is high - 
                 it means that the initiator spent quite a lot of resources.
@@ -443,9 +452,148 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             </section>
         </section>
         <section anchor="ikeauth" title="Puzzles in IKE_AUTH Exchange">
-            <t>To be added.</t>
-            <section anchor="comppuzzleauth" title="Computing Puzzle in IKE_AUTH Exchange">
-                <t>To be added.</t>
+            <t>Once the IKE_SA_INIT exchange is completed, the responder has created 
+            a state and is awaiting for the first message of the IKE_AUTH exchange from initiator.
+            At this point the initiator has already passed return routability check
+            and has proved that it has performed some work to complete IKE_SA_INIT exchange.
+            However, the initiator is not yet authenticated and this fact allows
+            malicious initiator to conduct an attack, described in <xref target="analysis"/>.
+            Unlike DoS attack in IKE_SA_INIT exchange, which is targeted on the responder's memory
+            resources, the goal of this attack is to exhaust responder's CPU power.
+            The attack is performed by sending the first IKE_AUTH message containing garbage.
+            This costs nothing to the initiator, but the responder has to do
+            relatively costly operations of computing the Diffie-Hellman shared secret 
+            and deriving SK_* keys to be able to verify authenticity of the message.
+            If the responder doesn't save the computed keys after unsuccessful
+            verification of IKE_AUTH message, then the attack can be repeated several times
+            on the same IKE SA.
+            </t>
+            <t>The responder can use puzzles to make this attack more costly
+            for the initiator. The idea is that the responder includes puzzle in 
+            the IKE_SA_INIT response message and the initiator includes puzzle solution
+            in the first IKE_AUTH request message outside the Encrypted payload,
+            so that the responder is able to verify puzzle solution before 
+            computing Diffie-Hellman shared secret. The difficulty level of the 
+            puzzle should be selected so, that the initiator would spend substantially
+            more time to solve the puzzle, than the responder to compute the shared secret.
+            </t>
+            <t>The responder should constantly monitor the amount of the half-open IKE SA
+            states, that receive IKE_AUTH messages, but cannot decrypt them due to 
+            the integrity check failures. If the percentage of such states is high and 
+            it takes an essential fraction of responder's computing power to 
+            calculate keys for them, then the responder can assume that it is under
+            attack and can use puzzles to make it harder for attackers.
+            </t>
+            <section anchor="givepuzzleauth" title="Presenting Puzzle">
+                <t>The responder requests the initiator to solve a puzzle by including
+                the PUZZLE notification in the IKE_SA_INIT response message.
+                The responder MUST NOT use puzzles in the IKE_AUTH exchange unless the puzzle
+                has been previously presented and solved in the preceeding IKE_SA_INIT exchange. 
+                </t>
+                <figure align="center">
+                    <artwork align="left"><![CDATA[
+                          <--   HDR, SA, KE, Nr, N(PUZZLE), [V+][N+]
+                    ]]></artwork>
+                </figure>
+                <section anchor="diflevelauth" title="Selecting Puzzle Difficulty Level">
+                    <t>The difficulty level of the puzzle in IKE_AUTH should be chosen so,
+                    that the initiator would spend more time to solve the puzzle,
+                    than the responder to compute Diffie-Hellman shared secret and
+                    the keys, needed to decrypt and verify IKE_AUTH message.
+                    On the other hand, the difficulty level should not be too high,
+                    otherwise the legitimate clients would experience additional
+                    delay while establishing IKE SA. 
+                    </t>
+                    <t>Note, that since puzzles in the IKE_AUTH exchange are only allowed 
+                    to be used if they were used in the preceeding IKE_SA_INIT exchange, 
+                    the responder would be able to estimate the computing power of 
+                    the initiator and to select the difficulty level accordingly.
+                    Unlike puzzles in IKE_SA_INIT, the requested difficulty level
+                    for IKE_AUTH puzzles MUST NOT be zero. In other words, the responder
+                    must always set specific difficulty level and must not let the initiator
+                    to choose it on its own.
+                    </t>
+                </section>
+                <section anchor="puzzlealgauth" title="Selecting Puzzle Algorithm">
+                    <t>The algorithm for the puzzle is selected as described in 
+                    <xref target="negotiation"/>. There is no requirement, that the algorithm
+                    for the puzzle in the IKE_SA INIT exchange be the same, as the algorithm 
+                    for the puzzle in IKE_AUTH exchange, however it is expected
+                    that in most cases they will be the same.</t>
+                </section>
+            </section>
+            <section anchor="solvepuzzleauth" title="Solving Puzzle and Returning the Solution">
+                <t>If the IKE_SA_INIT response message contains the PUZZLE notification 
+                and the initiator supports puzzles, it MUST solve the puzzle. 
+                Puzzle construction on the IKE_AUTH exchange differs from the puzzle 
+                in the IKE_SA_INIT exchange and is described in <xref target="comppuzzleauth"/>. 
+                Once the puzzle is solved the initiator sends the IKE_AUTH request message, 
+                containing the Puzzle Solution payload.
+                </t>
+                <figure align="center">
+                    <artwork align="left"><![CDATA[
+HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
+            [IDr,] AUTH, SA, TSi, TSr}   -->
+                ]]></artwork>
+                </figure>
+                <t>The Puzzle Solution payload is placed outside the Encrypted payload,
+                so that the responder would be able to verify the puzzle before calculating
+                the Diffie-Hellman shared secret and the SK_* keys.
+                </t>
+                <t>If IKE Fragmentation is used, then the PS payload
+                MUST be present only in the first IKE Fragment message,
+                in accordance with the Section 2.5.3 of <xref target="RFC7383"/>.
+                Note, that calculation of the puzzle in the IKE_AUTH exchange doesn't 
+                depend on the content of the IKE_AUTH message (see <xref target="comppuzzleauth"/>).
+                Thus the responder has to solve the puzzle only once and the solution is valid 
+                for both unfragmented and fragmented IKE messages.
+                </t>
+                <section anchor="comppuzzleauth" title="Computing Puzzle">
+                    <t>The puzzle in the IKE_AUTH exchange is computed differently,
+                    than in the IKE_SA_INIT exchange (see <xref target="comppuzzleinit"/>). 
+                    The general principle is the same, the difference is in constructing 
+                    of the string S. Unlike the IKE_SA_INIT exchange, where S is the cookie, 
+                    in the IKE_AUTH exchange S is a concatenation of Nr and SPIr. 
+                    In other words,  the task for IKE initiator is to find the key K 
+                    for the agreed upon PRF such that the result of PRF(K,Nr | SPIr) 
+                    has sufficient number of trailing zero bits.
+                    Nr is a nonce used by the responder in IKE_SA_INIT exchange, stripped 
+                    of any headers. SPIr is IKE responder SPI in the SA being established.
+                    </t>
+                </section>
+            </section>
+            <section anchor="receivepuzzle" title="Receiving Puzzle Solution">
+                <t>If the responder requested the initiator to solve puzzle in the IKE_AUTH
+                exchange, then it SHOULD silently discard all the IKE_AUTH request
+                messages without the Puzzle Solution payload.
+                </t>
+                <t>Once the message containing solution for the puzzle is received 
+                the responder SHOULD verify the solution before performing computationly
+                intensive operations - computing the Diffie-Hellman shared secret
+                and the SK_* keys. The responder MUST silently discard the received
+                message if the puzzle solution is not correct. If the puzzle is
+                successfully verified and the SK_* key are calculated, but 
+                the message authenticity check fails, the responder SHOULD 
+                save the calculated keys in the IKE SA state while waiting for 
+                the retransmissions from the initiator. In this case
+                the responder may skip verification of the puzzle solution
+                and ignore the Puzzle Solution payload in the retransmitted 
+                messages.
+                </t>
+                <t>If the initiator uses IKE Fragmentation, then it is possible, 
+                that due to packets loss and/or reordering the responder would 
+                receive non-first IKE Fragment messages before receiving the first one,
+                containing the PS payload. In this case the responder MAY
+                choose to keep the received fragments until the first
+                fragment containing the solution to the puzzle is received.
+                However in this case the responder SHOULD NOT try to 
+                verify authenticity (that would require the calculation
+                of the SK_* keys) untill the first fragment with the PS
+                payload is received and the solution to the puzzle is verified.
+                After successful verification of the puzzle the responder would
+                calculate the SK_* key and verify authenticity of the collected
+                fragments.
+                </t>
             </section>
         </section>
     </section>
@@ -503,6 +651,9 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
     </section>
     <section title="Payload Formats">
         <section anchor="puzzlentf" title="PUZZLE Notification">
+            <t>The PUZZLE notification is used by IKE responder to inform the initiator
+            about the necessity to solve the puzzle. It contains the difficulty level 
+            of the puzzle and the PRF the initiator should use.</t>
             <figure align="center">
                 <artwork align="left"><![CDATA[
                      1                   2                   3
@@ -514,7 +665,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |              PRF              |  Difficulty   |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-            ]]></artwork>
+                ]]></artwork>
             </figure>
             <t><list style="symbols">
                 <t>Protocol ID (1 octet) - MUST be 0.</t>
@@ -531,9 +682,34 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 level and the initiator is free to select appropriate difficulty level of its own.
                 </t>
             </list></t>
+            <t>This notification contains no data.</t>
         </section>
         <section anchor="puzzlesolutionpld" title="Puzzle Solution Payload">
-            <t>To be added.</t>
+            <t>The solution to the puzzle is returned back to the responder in a dedicated payload,
+            called Puzzle Solution payload and denoted as PS in this document.</t>
+            <figure align="center">
+                <artwork align="left"><![CDATA[
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Next Payload  |C|  RESERVED   |         Payload Length        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                     Puzzle Solution Data                      ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                ]]></artwork>
+            </figure>
+            <t><list style="symbols">
+                <t>Puzzle Solution Data (variable length) - Contains the solution to the 
+                puzzle - i.e. the key for the PRF. This field MUST NOT be empty.
+                If the selected PRF has a fixed-size key, then the size of the 
+                Puzzle Solution Data MUST be equal to the size of the key. If the PRF 
+                agreed upon accepts keys of any size, then then the size of the 
+                Puzzle Solution Data MUST be between 1 octet and the preferred key
+                length of the PRF (inclusive).</t>
+            </list></t>
+            <t>The payload type for the Puzzle Solution payload is &lt;TBA by IANA&gt;.</t>
         </section>
     </section>
 
@@ -541,7 +717,19 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
       <t> To be added.</t>
     </section>
     <section anchor="iana" title="IANA Considerations">  
-      <t> IANA is requested to assign a notify message type from the status types range (16430-40959) of the "IKEv2 Notify Message Types - Status Types" registry with name "PUZZLE".</t>
+            <t>This document defines a new payload in the "IKEv2 Payload Types" registry:</t>
+            <figure align="center">
+                <artwork align="left"><![CDATA[
+  <TBA>       Puzzle Solution                   PS
+                ]]></artwork>
+            </figure>
+            <t>This document also defines a new Notify Message Type in the 
+            "IKEv2 Notify Message Types - Status Types" registry:</t>
+            <figure align="center">
+                <artwork align="left"><![CDATA[
+  <TBA>       PUZZLE
+                ]]></artwork>
+            </figure>
     </section>
   </middle>
   <!-- ====================================================================== -->
@@ -549,6 +737,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
     <references title="Normative References"> 
       &rfc2119;
       &rfc7296;
+      &rfc7383;
       <reference anchor="IKEV2-IANA" target="http://www.iana.org/assignments/ikev2-parameters">
         <front>
           <title>Internet Key Exchange Version 2 (IKEv2) Parameters</title>
