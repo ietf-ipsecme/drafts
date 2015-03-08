@@ -34,13 +34,13 @@
       <organization abbrev="ELVIS-PLUS">ELVIS-PLUS</organization>
       <address>
         <postal>
-          <street>PO Box 81</streen>
+          <street>PO Box 81</street>
           <city>Moscow (Zelenograd)</city>
           <code>124460</code>
           <country>Russian Federation</country>
         </postal>
-        <email>svan@elvis.ru</email>
         <phone>+7 495 276 0211</phone>
+        <email>svan@elvis.ru</email>
       </address>
     </author>
     <date year="2015"/>
@@ -101,39 +101,44 @@
       <t> A puzzle is sent to the Initiator in two cases:<list style="symbols">
         <t> The Responder is so overloaded, than no half-open SAs are allowed to be created without the puzzle, or</t>
         <t> The Responder is not too loaded, but the rate-limiting in <xref target="ratelimit" /> prevents half-open SAs from being created with this particular peer address or prefix without first solving a puzzle.</t></list></t>
-      <t> When the Responder decides to send the challenge notification in response to a IKE_SA_INIT request, the notification includes two fields:<list style="numbers">
-        <t> Cookie - this is calculated the same as in RFC 7296. As in RFC 7296, the process of generating the cookie is not specified, but this specification does assume that it is fixed-length, meaning that all cookies produced by a particular responder are of the same length.</t>
-        <t> Zero Bit Count. This is a number between 8 and 255 that represents the length of the zero-bit run at the end of the SHA-256 hash of the Cookie payload that the Initiator is to send. Since the mechanism is supposed to be stateless for the Responder, the same value is sent to all Initiators who are receiving this challenge. The values 0 and 1-8 are explicitly excluded, because the value zero is meaningless, and the values 1-8 create a puzzle that is too easy to solve to make any difference in mitigating DDoS attacks.</t></list></t>
-      <t> Upon receiving this challenge payload, the Initiator attempts to append different strings to the Cookie field from the challenge, and calculates the SHA-256 hash of the result. When a string is found such that the resulting hash has a sufficient number of trailing zero bits, that result is sent to the Responder in a Cookie notification, similar to what is described in RFC 7296. The difference is that the string in this Cookie notification is longer than the one transmitted.</t>
-      <t> When receiving a request with an extended Cookie, the Responder verifies two things:<list style="symbols">
-        <t> That the first bits of the transmitted cookie are indeed valid.</t>
-        <t> That the hash of the transmitted cookie has a sufficient number of trailing zero bits.</t></list></t>
-      <t> Example 1: Suppose the calculated cookie is fdbcfa5a430d7201282358a2a034de0013cfe2ae (20 octets) and the required number of zero bits is 16. After successively trying a bunch of strings, the Initiator finds out that appending three octets: 022b3d yields a 23-octet string whose SHA-256 hash is 3b4bdf201105e059e09f65219021738b8f6a148896b2e1be2fdc726aeb6e0000. That has 17 trailing zero bits, so it is an acceptable cookie. </t>
-      <t> Example 2: Same cookie, but this time the required number of zero bits is 22. The first string to satisfy that requirement is 5c2880, which yields a hash with 23 trailing zero bits. Finding this requires 6,105,472 hashes.</t>
+      <t> When the Responder decides to send the challenge notification in response to a IKE_SA_INIT request, the notification includes three fields:<list style="numbers">
+        <t> Cookie - this is calculated the same as in RFC 7296. As in RFC 7296, the process of generating the cookie is not specified.</t>
+        <t> Algorithm, this is the identifier of a PRF algorithm, one of those proposed by the Initiator in the SA payload.</t>
+        <t> Zero Bit Count. This is a number between 8 and 255 that represents the length of the zero-bit run at the end of the output of the PRF function calculated over the Keyed-Cookie payload that the Initiator is to send. Since the mechanism is supposed to be stateless for the Responder, the same value is sent to all Initiators who are receiving this challenge. The values 0 and 1-8 are explicitly excluded, because the value zero is meaningless, and the values 1-8 create a puzzle that is too easy to solve for it to make any difference in mitigating DDoS attacks.</t></list></t>
+      <t> Upon receiving this challenge payload, the Initiator attempts to calculate the PRF using different keys. When a key is found such that the resulting PRF output has a sufficient number of trailing zero bits, that result is sent to the Responder in a Keyed-Cookie notification, as described in <xref target="keyed_cookie" />.</t>
+      <t> When receiving a request with a Keyed-Cookie, the Responder verifies two things:<list style="symbols">
+        <t> That the cookie part is indeed valid.</t>
+        <t> That the PRF of the transmitted cookie calculated with the transmitted key has a sufficient number of trailing zero bits.</t></list></t>
+      <t> Example 1: Suppose the calculated cookie is fdbcfa5a430d7201282358a2a034de0013cfe2ae (20 octets), the algorithm is HMAC-SHA256, and the required number of zero bits is 18. After successively trying a bunch of keys, the Initiator finds that the key that is all-zero except for the last three bytes which are 02fc95 yields HMAC_SHA256(k, cookie) = 843ab73f35c5b431b1d8f80bedcd1cb9ef46832f799c1d4250a49f683c580000, which has 19 trailing zero bits, so it is an acceptable solution.</t>
+      <t> Example 2: Same cookie, but this time the required number of zero bits is 22. The first key to satisfy that requirement ends in 960cbb, which yields a hash with 23 trailing zero bits. Finding this requires 9,833,659 invocations of the PRF.</t>
       <texttable anchor="tbl1" title="COOKIE=fdbcfa5a430d7201282358a2a034de0013cfe2ae">
-        <ttcol align="center">Appended String</ttcol>
-        <ttcol align="left">Last 24 Hex Hash Digits</ttcol>
+        <ttcol align="center">key</ttcol>
+        <ttcol align="left">Last 24 Hex PRF Digits</ttcol>
         <ttcol align="center"># 0-bits</ttcol>
         <ttcol align="center">Time To Calculate</ttcol>
-<c>04</c><c>2817ae10f20f4e0b0739f5cc</c><c>2</c><c>0.000</c>
-<c>06</c><c>e540cf315fff88c1c5f362a8</c><c>3</c><c>0.000</c>
-<c>0d</c><c>8c459376268f747d7ed40da0</c><c>5</c><c>0.000</c>
-<c>1c</c><c>398c49be1babe50576cdae40</c><c>6</c><c>0.000</c>
-<c>00f0</c><c>3f523ad7c0e00252c51ad980</c><c>7</c><c>0.000</c>
-<c>0182</c><c>e284296e2ffffa256bdfa800</c><c>11</c><c>0.000</c>
-<c>235c</c><c>7dc74302dc8bd695821ab000</c><c>12</c><c>0.006</c>
-<c>7186</c><c>a4411c3df3661eff1d574000</c><c>14</c><c>0.019</c>
-<c>d836</c><c>498bcd04ab1ae0c2c3a08000</c><c>15</c><c>0.036</c>
-<c>022b3d</c><c>96b2e1be2fdc726aeb6e0000</c><c>17</c><c>0.136</c>
-<c>0aa679</c><c>620f48af85428996c1f00000</c><c>20</c><c>0.512</c>
-<c>4ffbad</c><c>f9ba0ece854cd0fa88e00000</c><c>21</c><c>3.602</c>
-<c>5c2880</c><c>d44e6467d8fc37723d800000</c><c>23</c><c>4.143</c>
-<c>cdafe1</c><c>0d4058660c3e67be62000000</c><c>25</c><c>9.245</c>
-<c>022bffc8</c><c>5f2d874764a71e2948000000</c><c>27</c><c>36.169</c>
-<c>181ac92a</c><c>c3b5449fa1019b0580000000</c><c>31</c><c>255.076</c>
-<c>a987978d</c><c>95a5673968a9b37a00000000</c><c>33</c><c>1309.519</c>
+<c>00</c><c>0cbbbd1e105f5a177f9697d4</c><c>2</c><c>0.000</c>
+<c>08</c><c>34cdedf89560f600aab93c68</c><c>3</c><c>0.000</c>
+<c>0b</c><c>6153a5131b879a904cd7fbe0</c><c>5</c><c>0.000</c>
+<c>2b</c><c>0098af3e9422aa40a6f7b140</c><c>6</c><c>0.000</c>
+<c>0147</c><c>c8bf4a65fc8b974046b97c00</c><c>10</c><c>0.001</c>
+<c>06e2</c><c>541487a10cbdf3b21c382800</c><c>11</c><c>0.005</c>
+<c>0828</c><c>48719bd62393fcf9bc172000</c><c>13</c><c>0.006</c>
+<c>0204a7</c><c>3dce3414477c2364d5198000</c><c>15</c><c>0.186</c>
+<c>185297</c><c>c19385bb7b9566e5fdf00000</c><c>20</c><c>2.146</c>
+<c>69dc34</c><c>1b61ecb347cb2e0cba200000</c><c>21</c><c>9.416</c>
+<c>960cbb</c><c>e48274bfac2b7e1930800000</c><c>23</c><c>13.300</c>
+<c>01597972</c><c>39a0141d0fe4b87aea000000</c><c>25</c><c>30.749</c>
+<c>0b13cd9a</c><c>00b97bb323d6d33350000000</c><c>28</c><c>247.914</c>
+<c>37dc96e4</c><c>1e24babc92234aa3a0000000</c><c>29</c><c>1237.170</c>
+<c>7a1a56d8</c><c>c98f0061e380a49e00000000</c><c>33</c><c>2726.150</c>
       </texttable>
       <t> The figures above were obtained on a 2.4 GHz single core i5. Run times can be halved or quartered with multi-core code, but would be longer on mobile phone processors, even if those are multi-core as well. With these figures I believe that 20 bits is a reasonable choice for puzzle level difficulty for all Initiators, with 24 bits acceptable for specific hosts/prefixes.</t>
+      <section anchor="keyed_cookie" title="The Keyed-Cookie Notification">
+        <t> To be added </t>
+      </section>
+      <section anchor="puzzle_required" title="The Puzzle-Required Notification">
+        <t> To be added </t>
+      </section>
     </section>
     <section anchor="timelimit" title="Retention Periods for Half-Open SAs">
       <t> As a UDP-based protocol, IKEv2 has to deal with packet loss through retransmissions. Section 2.4 of RFC 7296 recommends "that messages be retransmitted at least a dozen times over a period of at least several minutes before giving up". Retransmission policies in practice wait at least one or two seconds before retransmitting for the first time.</t>
