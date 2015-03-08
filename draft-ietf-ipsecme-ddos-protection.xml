@@ -749,6 +749,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
           <author initials="" surname="" fullname="">
             <organization />
           </author>
+          <date />
         </front>
       </reference>
     </references>
