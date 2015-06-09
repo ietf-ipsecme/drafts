@@ -1,0 +1,552 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type='text/xsl' href='./rfc2629.xslt' ?>
+
+<?rfc toc="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc compact="yes" ?>
+<?rfc sortrefs="yes" ?>
+<?rfc strict="yes" ?>
+<?rfc linkmailto="yes" ?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" >
+    
+
+<?xml-stylesheet type='text/xsl' href='./rfc2629.xslt' ?>
+
+<?rfc symrefs="yes"?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="yes" ?>
+<?rfc sortrefs="yes" ?>
+<rfc ipr="trust200902" docName="draft-nir-ipsecme-curve25519-xx" category="std">
+  <front>
+    <title abbrev="Curve25519 for IKEv2">Using Curve25519 for IKEv2 Key Agreement</title>
+    <author initials="Y." surname="Nir" fullname="Yoav Nir">
+      <organization abbrev="Check Point">Check Point Software Technologies Ltd.</organization>
+      <address>
+        <postal>
+          <street>5 Hasolelim st.</street>
+          <city>Tel Aviv</city>
+          <code>6789735</code>
+          <country>Israel</country>
+        </postal>
+        <email>ynir.ietf@gmail.com</email>
+      </address>
+    </author>
+    <author initials="S." surname="Josefsson" fullname="Simon Josefsson">
+      <organization abbrev="SJD">SJD AB</organization>
+      <address>
+        <email>simon@josefsson.org</email>
+      </address>
+    </author>
+    <date year="2015"/>
+    <area>Security Area</area>
+    <keyword>Internet-Draft</keyword>
+    <abstract>
+      <t> This document describes the use of Curve25519 for ephemeral key 
+        exchange in the Internet Key Exchange (IKEv2) protocol.</t>
+    </abstract>
+  </front>
+  <middle>
+    <!-- ====================================================================== -->
+    <section anchor="introduction" title="Introduction">
+      <t> <xref target="CFRG-Curves" /> specifies a new elliptic curve function 
+        for use in cryptographic applications. Curve25519 is a Diffie-Hellman 
+        function designed with performance and security in mind.</t>
+      <t> Almost ten years ago <xref target="RFC4753" /> specified the first 
+        elliptic curve Diffie-Hellman groups for the Internet Key Exchange 
+        protocol (IKEv2 - <xref target="RFC7296" />). These were the so-called 
+        NIST curves. The state of the art has advanced since then. More modern 
+        curves allow faster implementations while making it much easier to 
+        write constant-time implementations free from side-channel attacks. 
+        This document defines such a curve for use in IKE. See 
+        <xref target="Curve25519" /> for details about the speed and security 
+        of this curve.</t>
+      <section anchor="mustshouldmay" title="Conventions Used in This Document">
+        <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", 
+          "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this 
+          document are to be interpreted as described in 
+          <xref target="RFC2119"/>.</t>
+      </section>
+    </section>
+    <section anchor="crypto" title="Curve25519">
+      <t> All cryptographic computations are done using the Curve25519 function 
+        defined in <xref target="CFRG-Curves" />.  In this document, this 
+        function is considered a black box that takes for input a (secret key, 
+        public key) pair and outputs a public key.  Public keys are defined as 
+        strings of 32 octets.  Secret keys are defined as 255-bit numbers such 
+        that high-order bit (bit 254) is set, and the three lowest-order bits 
+        are unset.  In addition, a common public key, denoted by G, is shared 
+        by all users.</t>
+      <t> An ephemeral Diffie-Hellman key exchange using Curve25519 goes as 
+        follows: Each party picks a secret key d uniformly at random and 
+        computes the corresponding public key:<figure>
+      		<artwork><![CDATA[
+   x_mine = Curve25519(d, G)
+]]></artwork></figure></t>
+      <t> Parties exchange their public keys (see <xref target="ke_format" />) 
+        and compute a shared secret:<figure>
+      		<artwork><![CDATA[
+   SHARED_SECRET = Curve25519(d, x_peer).
+]]></artwork></figure></t>
+      <t> This shared secret is used directly as the value denoted g^ir in 
+        section 2.14 of RFC 7296. It is always exactly 32 octets when 
+        Curve25519 is used.</t>
+      <t> A complete description of the Curve25519 function, as well as a few 
+        implementation notes, are provided in <xref target="curve25519func" />.</t>
+    </section> 
+    <section anchor="in_ikev2" title="Use and Negotiation in IKEv2">
+      <t> The use of Curve25519 in IKEv2 is negotiated using a Transform Type 4 
+        (Diffie-Hellman group) in the SA payload of either an IKE_SA_INIT or a 
+        CREATE_CHILD_SA exchange.</t>
+      <section anchor="ke_format" title="Key Exchange Payload">
+        <t> The diagram for the Key Exchange Payload from section 3.4 of RFC 
+          7296 is copied below for convenience:<figure>
+      		<artwork><![CDATA[
+                        1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Next Payload  |C|  RESERVED   |         Payload Length        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Diffie-Hellman Group Num    |           RESERVED            |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   ~                       Key Exchange Data                       ~
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+]]></artwork></figure></t>
+        <t><list style="symbols">
+          <t> Payload Length - Since a Curve25519 public key is 32 octets, the 
+            Payload Length is always 40.</t>
+          <t> The Diffie-Hellman Group Num is xx for Curve25519 (TBA by IANA)</t>
+          <t> The Key Exchange Data is 32 octets encoded as an array of bytes 
+            in little-endian order as described in section 8 of 
+            <xref target="CFRG-Curves" /></t></list></t>
+      </section> 
+      <section anchor="rec_test" title="Recipient Tests">
+        <t> Curve25519 was designed in a way that the result of Curve25519(x, d) 
+          will never reveal information about d, provided is was chosen as 
+          prescribed, for any value of x.</t>
+        <t> Define legitimate values of x as the values that can be obtained as 
+          x = Curve25519(G, d') for some d, and call the other values 
+          illegitimate.  The definition of the Curve25519 function shows that 
+          legitimate values all share the following property: the high-order 
+          bit of the last byte is not set.</t>
+        <t> Since there are some implementation of the Curve25519 function that 
+          impose this restriction on their input and others that don't, 
+          implementations of Curve25519 in IKE SHOULD reject public keys when 
+          the high-order bit of the last byte is set (in other words, when the 
+          value of the leftmost byte is greater than 0x7F) in order to prevent 
+          implementation fingerprinting.</t>
+        <t> Other than this recommended check, implementations do not need to 
+          ensure that the public keys they receive are legitimate: this is not 
+          necessary for security with Curve25519.</t>
+      </section>
+    </section> 
+    <section anchor="security" title="Security Considerations">
+      <t> Curve25519 is designed to facilitate the production of 
+        high-performance constant-time implementations of the Curve25519 
+        function. Implementors are encouraged to use a constant-time 
+        implementation of the Curve25519 function.  This point is of crucial 
+        importance if the implementation chooses to reuse its supposedly 
+        ephemeral key pair for many key exchanges, which some implementations 
+        do in order to improve performance.</t>
+      <t> Curve25519 is believed to be at least as secure as the 256-bit random 
+        ECP group (group 19) defined in RFC 4753, also know as NIST P-256.  
+        While the NIST curves are advertised as being chosen verifiably at 
+        random, there is no explanation for the seeds used to generate them. In 
+        contrast, the process used to pick Curve25519 is fully documented and 
+        rigid enough so that independent verification has been done.  This is 
+        widely seen as a security advantage for Curve25519, since it prevents 
+        the generating party from maliciously manipulating the parameters.</t>
+      <t> Another family of curves available in IKE, generated in a fully 
+        verifiable way, is the Brainpool curves <xref target="RFC6954" />.  
+        Specifically, brainpoolP256 (group 28) is expected to provide a level 
+        of security comparable to Curve25519 and NIST P-256.  However, due to 
+        the use of pseudo-random prime, it is significantly slower than NIST 
+        P-256, which is itself slower than Curve25519.</t>
+    </section>
+    <section anchor="iana" title="IANA Considerations">
+      <t> IANA is requested to assign one value from the IKEv2 
+        "Transform Type 4 - Diffie-Hellman Group Transform IDs" registry, with 
+        name Curve25519, and this document as reference. The Recipient Tests 
+        field should also point to this document.</t>
+    </section>  
+    <section anchor="ack" title="Acknowledgements">
+      <t> Curve25519 was designed by D. J. Bernstein and Tanja Lange. The 
+        specification of wire format is by Sean Turner, Rich Salz, and Watson 
+        Ladd, with Adam Langley editing the current document. Much of the text 
+        in this document is copied from Simon's draft for the TLS working group.</t>
+    </section>    
+  </middle>
+  <!-- ====================================================================== -->
+  <back>
+    <references title="Normative References"> 
+      <reference anchor='RFC2119'>
+        <front>
+          <title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials='S.' surname='Bradner' fullname='Scott Bradner'>
+            <organization>Harvard University</organization>
+            <address>
+              <postal>
+                <street>1350 Mass. Ave.</street>
+                <street>Cambridge</street>
+                <street>MA 02138</street>
+              </postal>
+              <phone>- +1 617 495 3864</phone>
+              <email>sob@harvard.edu</email>
+            </address>
+          </author>
+          <date year='1997' month='March' />
+          <area>General</area>
+          <keyword>keyword</keyword>
+        </front>
+        <seriesInfo name='BCP' value='14' />
+        <seriesInfo name='RFC' value='2119' />
+        <format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
+        <format type='HTML' octets='16553' target='http://tools.ietf.org/html/rfc2119' />
+      </reference>
+      <reference anchor="RFC7296">
+        <front>
+          <title>Internet Key Exchange Protocol Version 2 (IKEv2)</title>
+          <author initials="T." surname="Kivinen" fullname="Tero Kivinen">
+            <organization/>
+          </author>
+          <author initials="C." surname="Kaufman" fullname="C. Kaufman">
+            <organization/>
+          </author>
+          <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+            <organization/>
+          </author>
+          <author initials="Y." surname="Nir" fullname="Y. Nir">
+            <organization/>
+          </author>
+          <author initials="P." surname="Eronen" fullname="P. Eronen">
+            <organization/>
+          </author>
+          <date year="2014" month="October"/>
+        </front>
+        <seriesInfo name="RFC" value="7296"/>
+        <format type="HTML" target="https://tools.ietf.org/html/rfc5996"/>
+      </reference>
+      <reference anchor="CFRG-Curves">
+        <front>
+          <title>Elliptic Curves for Security</title>
+            <author initials="A" surname="Langley" fullname="Adam Langley"></author>
+            <date month="January" day="6" year="2015"/>
+          </front>
+        <seriesInfo name="Internet-Draft" value="draft-agl-cfrgcurve-00"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-agl-cfrgcurve-00.txt"/>
+      </reference>
+    </references>
+    <references title="Informative References"> 
+      <reference anchor="RFC4753">
+        <front>
+          <title>ECP Groups For IKE and IKEv2</title>
+          <author initials="D." surname="Fu" fullname="D. Fu">
+          </author>
+          <author initials="J." surname="Solinas" fullname="J. Solinas">
+          </author>
+          <date year="2007" month="January"/>
+        </front>
+        <seriesInfo name="RFC" value="4753"/>
+        <format type="TXT" octets="28760" target="http://www.rfc-editor.org/rfc/rfc4753.txt"/>
+      </reference>
+      <reference anchor="Curve25519" target="http://dx.doi.org/10.1007/11745853_14">
+        <front>
+          <title>Curve25519: New Diffie-Hellman Speed Records</title>
+          <author initials="J." surname="Bernstein"/>
+          <date year="2006" month="February" />
+        </front>
+        <seriesInfo name="LNCS" value="3958"/>
+      </reference>
+      <reference anchor="EFD"
+        target="http://www.hyperelliptic.org/EFD/g1p/auto-montgom-xz.html">
+         <front>
+            <title>Explicit-Formulas Database: XZ coordinates for
+               Montgomery curves</title>
+            <author initials="D.J." surname="Bernstein"
+               fullname="Daniel J. bernstein">
+               <organization />
+            </author>
+            <author initials="T." surname="Lange" fullname="Tanja Lange">
+               <organization />
+            </author>
+            <date month="January" year="2014"/>
+         </front>
+      </reference>
+      <reference anchor="NaCl"
+        target="http://cr.yp.to/highspeed/naclcrypto-20090310.pdf">
+         <front>
+            <title>Cryptography in NaCL</title>
+            <author initials="D.J." surname="Bernstein"
+               fullname="Daniel J. bernstein">
+               <organization />
+            </author>
+            <date month="March" year="2013"/>
+         </front>
+      </reference>
+      <reference anchor="RFC6954">
+        <front>
+          <title>
+          Using the Elliptic Curve Cryptography (ECC) Brainpool Curves for the Internet Key Exchange Protocol Version 2 (IKEv2)
+          </title>
+          <author initials="J." surname="Merkle" fullname="J. Merkle" />
+          <author initials="M." surname="Lochter" fullname="M. Lochter" />
+          <date year="2013" month="July"/>
+        </front>
+        <seriesInfo name="RFC" value="6954"/>
+        <format type="TXT" octets="20366" target="http://www.rfc-editor.org/rfc/rfc6954.txt"/>
+      </reference>
+    </references>
+    <!-- ====================================================================== -->
+    <section anchor="curve25519func" title="The curve25519 function">
+
+      <section title="Formulas">
+
+        <t>This section completes <xref target="crypto" /> by defining
+          the Curve25519 function and the common public key G.
+          It is meant as an alternative, self-contained specification
+          for the Curve25519 function, possibly easier to follow than
+          the original paper for most implementors.</t>
+
+        <section anchor="field" title="Field Arithmetic">
+
+          <t>Throughout this section, P denotes the integer 2^255-19 =
+            0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED.
+            The letters X and Z, and their numbered variants such as x1,
+            z2, etc. denote integers modulo P, that is integers
+            between 0 and P-1 and every operation between them is
+            implictly done modulo P. For addition, subtraction and
+            multiplication this means doing the operation in the usual
+            way and then replacing the result with the remainder of its
+            division by P. For division, "X / Z" means mutliplying (mod P) X
+            by the modular inverse of Z mod P.</t>
+
+          <t>A convenient way to define the modular inverse of Z mod P is
+            as Z^(P-2) mod P, that is Z to the power of 2^255-21 mod P. It
+            is also a practical way of computing it, using a
+            square-and-multiply method.</t>
+
+          <t>The four operations +, -, *, / modulo P are known as the
+            field operations. Techniques for efficient implementation
+            of the field operations are outside the scope of this
+            document.</t>
+
+        </section>
+
+        <section title="Conversion to and from internal format">
+
+          <t>For the purpose of this section, we will define a
+            Curve25519 point as a pair (X, Z) were X and Z are integers
+            mod P (as defined above). Though public keys were defined to
+            be strings of 32 bytes, internally they are represented as
+            curve points. This subsection describes the conversion
+            process as two functions: PubkeyToPoint and PointToPubkey.</t>
+
+          <figure>
+            <artwork><![CDATA[
+    PubkeyToPoint:
+    Input: a public key b_0, ..., b_31
+    Output: a Curve25519 point (X, Z)
+        1. Set X = b_0 + 256 * b_1 + ... + 256^31 * b_31 mod P
+        2. Set Z = 1
+        3. Output (X, Z)
+              ]]></artwork>
+          </figure>
+
+          <figure>
+            <artwork><![CDATA[
+    PointToPubkey:
+    Input: a Curve25519 point (X, Z)
+    Output: a public key b_0, ..., b_31
+        1. Set x1 = X / Z mod P
+        2. Set b_0, ... b_31 such that
+            x1 = b_0 + 256 * b_1 + ... + 256^31 * b_31 mod P
+        3. Output b_0, ..., b_31
+              ]]></artwork>
+          </figure>
+
+        </section>
+
+        <section title="Scalar Multiplication">
+
+          <t>We first introduce the DoubleAndAdd function, defined as
+            follows (formulas taken from <xref target="EFD" />).</t>
+
+          <figure>
+            <artwork><![CDATA[
+    DoubleAndAdd:
+    Input: two points (X2, Z2), (X3, Z3), and an integer mod P: X1
+    Output: two points (X4, Z4), (X5, Z5)
+    Constant: the integer mod P: a24 = 121666 = 0x01DB42
+    Variables: A, AA, B, BB, E, C, D, DA, CB are integers mod P
+        1. Do the following computations mod P:
+            A  = X2 + Z2
+            AA = A2
+            B  = X2 - Z2
+            BB = B2
+            E  = AA - BB
+            C  = X3 + Z3
+            D  = X3 - Z3
+            DA = D * A
+            CB = C * B
+            X5 = (DA + CB)^2
+            Z5 = X1 * (DA - CB)^2
+            X4 = AA * BB
+            Z4 = E * (BB + a24 * E)
+        2. Output (X4, Z4) and (X5, Z5)
+              ]]></artwork>
+          </figure>
+
+          <t>This may be taken as the abstract definition of an
+            arbitrary-looking function. However, let's mention "the true
+            meaning" of this function, without justification, in order
+            to help the reader make more sense of it.  It is possible to
+            define operations "+" and "-" between Curve25519 points.
+            Then, assuming (X2, Z2) - (X3, Z3) = (X1, 1), the
+            DoubleAndAdd function returns points such that (X4, Z4) =
+            (X2, Z2) + (X2, Z2) and (X5, Z5) = (X2, Z2) + (X3, Z3).</t>
+
+          <t>Taking the "+" operation as granted, we can define
+            multiplication of a Curve25519 point by a positive integer
+            as N * (X, Z) = (X, Z) + ... + (X, Z), with N point
+            additions. It is possible to compute this operation, known
+            as scalar multiplication, using an algorithm called the
+            Montgomery ladder, as follows.</t>
+
+          <figure>
+            <artwork><![CDATA[
+    ScalarMult:
+    Input: a Curve25519 point: (X, 1) and a 255-bits integer: N
+    Output: a point (X1, Z1)
+    Variable: a point (X2, Z2)
+        0. View N as a sequence of bits b_254, ..., b_0,
+            with b_254 the most significant bit
+            and b_0 the least significant bit.
+        1. Set X1 = 1 and Z1 = 0
+        2. Set X2 = X and Z2 = 1
+        3. For i from 254 downwards to 0, do:
+            If b_i == 0, then:
+                Set (X2, Z2) and (X1, Z1) to the output of
+                DoubleAndAdd((X2, Z2), (X1, Z1), X)
+            else:
+                Set (X1, Z1) and (X2, Z2) to the output of
+                DoubleAndAdd((X1, Z1), (X2, Z2), X)
+        4. Output (X1, Z1)
+              ]]></artwork>
+          </figure>
+
+        </section>
+
+        <section title="Conclusion">
+
+          <t>We are now ready to define the Curve25519 function
+            itself.</t>
+
+          <figure>
+            <artwork><![CDATA[
+    Curve25519:
+    Input: a public key P and a secret key S
+    Output: a public key Q
+    Variables: two Curve25519 points (X, Z) and (X1, Z1)
+        1. Set (X, Z) = PubkeyToPoint(P)
+        2. Set (X1, Z1) = ScalarMult((X, Z), S)
+        3. Set Q = PointToPubkey((X1, Z1))
+        4. Output Q
+              ]]></artwork>
+          </figure>
+
+          <t>The common public key G mentioned in the first paragraph of
+            <xref target="crypto" /> is defined as G = PointToPubkey((9,
+            1).</t>
+
+        </section>
+
+      </section>
+
+      <section title="Test vectors">
+
+        <t>The following test vectors are taken from <xref target="NaCl"
+            />. Compared to this reference, the private key strings
+          have been applied the ClampC function of the reference and
+          converted to integers in order to fit the description given in
+          <xref target="Curve25519" /> and the present memo.</t>
+
+        <t>The secret key of party A is denoted by S_a, it public key by
+          P_a, and similarly for party B. The shared secret is SS.</t>
+
+        <figure>
+          <artwork><![CDATA[
+          S_a = 0x6A2CB91DA5FB77B12A99C0EB872F4CDF
+                  4566B25172C1163C7DA518730A6D0770
+
+          P_a = 85 20 F0 09 89 30 A7 54 74 8B 7D DC B4 3E F7 5A
+                0D BF 3A 0D 26 38 1A F4 EB A4 A9 8E AA 9B 4E 6A
+
+          S_b = 0x6BE088FF278B2F1CFDB6182629B13B6F
+                  E60E80838B7FE1794B8A4A627E08AB58
+
+          P_b = DE 9E DB 7D 7B 7D C1 B4 D3 5B 61 C2 EC E4 35 37
+                3F 83 43 C8 5B 78 67 4D AD FC 7E 14 6F 88 2B 4F
+
+           SS = 4A 5D 9D 5B A4 CE 2D E1 72 8E 3B F4 80 35 0F 25
+                E0 7E 21 C9 47 D1 9E 33 76 F0 9B 3C 1E 16 17 42
+            ]]></artwork>
+        </figure>
+
+      </section>
+
+      <section title="Side-channel considerations">
+
+        <t>Curve25519 was specifically designed so that correct, fast,
+          constant-time implementations are easier to produce. In
+          particular, using a Montgomery ladder as described in the
+          previous section ensures that, for any valid value of the
+          secret key, the same sequence of field operations are
+          performed, which eliminates a major source of side-channel
+          leakage.</t>
+
+        <t>However, merely using Curve25519 with a Montgomery ladder does
+          not prevent all side-channels by itself, and some point are the
+          responsibility of implementors:
+          <list style="numbers">
+            <t>In step 3 of SclarMult, avoid branches depending on
+              b_i, as well as memory access patterns depending on b_i,
+              for example by using safe conditional swaps on the inputs
+              and outputs of DoubleAndAdd.</t>
+            <t>Avoid data-dependant branches and memory access patterns
+              in the implementation of field operations.</t>
+          </list>
+        </t>
+
+        <t>Techniques for implementing the field operations in constant
+          time and with high performance are out of scope of this
+          document. Let's mention however that, provided constant-time
+          multiplication is available, division can be computed in
+          constant time using exponentiation as described in <xref
+            target="field" />.</t>
+
+        <t>If using constant-time implementations of the field
+          operations is not convenient, an option to reduce the
+          information leaked this way is to replace step 2 of the
+          SclarMult function with:</t>
+        <figure>
+          <artwork><![CDATA[
+        2a. Pick Z uniformly randomly between 1 and P-1 included
+        2b. Set X2 = X * Z and Z2 = Z
+            ]]></artwork>
+        </figure>
+        <t>This method is known as randomizing projective coordinates.
+          However, it is no guaranteed to avoid all side-channel leaks
+          related to field operations.</t>
+
+        <t>Side-channel attacks are an active reseach domain that still
+          sees new significant results, so implementors of the
+          Curve25519 function are advised to follow recent security
+          research closely.</t>
+
+      </section>
+
+    </section>
+
+  </back>
+</rfc>
