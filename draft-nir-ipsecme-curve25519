@@ -153,7 +153,7 @@
         ephemeral key pair for many key exchanges, which some implementations 
         do in order to improve performance.</t>
       <t> Curve25519 is believed to be at least as secure as the 256-bit random 
-        ECP group (group 19) defined in RFC 4753, also know as NIST P-256.  
+        ECP group (group 19) defined in RFC 4753, also known as NIST P-256.  
         While the NIST curves are advertised as being chosen verifiably at 
         random, there is no explanation for the seeds used to generate them. In 
         contrast, the process used to pick Curve25519 is fully documented and 
