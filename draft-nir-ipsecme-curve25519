@@ -122,6 +122,9 @@
             <xref target="CFRG-Curves" /></t></list></t>
       </section> 
       <section anchor="rec_test" title="Recipient Tests">
+        <t> This section describes the checks that a recipient of a public key 
+          needs to perform. It is the equivalent of the tests described in 
+          <xref target="RFC6989" /> for other Diffie-Hellman groups.</t>
         <t> Curve25519 was designed in a way that the result of Curve25519(x, d) 
           will never reveal information about d, provided is was chosen as 
           prescribed, for any value of x.</t>
@@ -295,6 +298,18 @@
         </front>
         <seriesInfo name="RFC" value="6954"/>
         <format type="TXT" octets="20366" target="http://www.rfc-editor.org/rfc/rfc6954.txt"/>
+      </reference>
+      <reference anchor="RFC6989">
+        <front>
+          <title>
+          Additional Diffie-Hellman Tests for the Internet Key Exchange Protocol Version 2 (IKEv2)
+          </title>
+          <author initials="Y." surname="Sheffer" fullname="Y. Sheffer"><organization/></author>
+          <author initials="S." surname="Fluhrer" fullname="S. Fluhrer"><organization/></author>
+          <date year="2013" month="July"/>
+        </front>
+        <seriesInfo name="RFC" value="6989"/>
+        <format type="TXT" octets="21099" target="http://www.rfc-editor.org/rfc/rfc6989.txt"/>
       </reference>
     </references>
     <!-- ====================================================================== -->
