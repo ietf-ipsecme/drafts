@@ -16,7 +16,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="yes" ?>
 <?rfc sortrefs="yes" ?>
-<rfc ipr="trust200902" docName="draft-nir-ipsecme-curve25519-xx" category="std">
+<rfc ipr="trust200902" docName="draft-nir-ipsecme-curve25519-00" category="std">
   <front>
     <title abbrev="Curve25519 for IKEv2">Using Curve25519 for IKEv2 Key Agreement</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
