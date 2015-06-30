@@ -89,8 +89,8 @@
       <t> At this point, filling up the half-open SA database in no longer the most efficient DoS attack. The attacker has two ways to do better:<list style="numbers">
         <t> Go back to spoofed addresses and try to overwhelm the CPU that deals with generating cookies, or</t>
         <t> Take the attack to the next level by also sending an Authentication request.</t></list></t>
-      <t> I don't think the first thing is something we can deal with at the IKE level. It's probably better left to Intrusion Prevention System (IPS) technology.</t>
-      <t> Sending an Authentication request is surprisingly cheap. It requires a proper IKE header with the correct IKE SPIs, and it requires a single encrypted payload. The content of the payload might as well be junk. The responder has to perform the relatively expensive key derivation, only to find that the Authentication request does not decrypt. Depending on the responder implementation, this can be repeated with the same half-open SA (if the responder does not delete the half-open SA following an unsuccessful decryption - see discussion in <xref target="timelimit" />).</t>
+      <t> It seems that the first thing cannot be dealt with at the IKE level. It's probably better left to Intrusion Prevention System (IPS) technology.</t>
+      <t> On the other hand sending an Authentication request is surprisingly cheap. It requires a proper IKE header with the correct IKE SPIs, and it requires a single encrypted payload. The content of the payload might as well be junk. The responder has to perform the relatively expensive key derivation, only to find that the Authentication request does not decrypt. Depending on the responder implementation, this can be repeated with the same half-open SA (if the responder does not delete the half-open SA following an unsuccessful decryption - see discussion in <xref target="timelimit" />).</t>
       <t> Here too, the number of half-open SAs that the attacker can achieve is crucial, because each one of them allows the attacker to waste some CPU time. So making it hard to make many half-open SAs is important.</t>
       <t> A strategy against DDoS has to rely on at least 4 components:<list style="numbers">
         <t> Hardening the half-open SA database by reducing retention time.</t>
@@ -100,14 +100,14 @@
       <t>Puzzles have their place as part of #4.</t>
     </section>
     <section anchor="puzzles" title="Puzzles">
-      <t> The puzzle introduced here extends the cookie mechanism from RFC 7296. It is loosely based on the proof-of-work technique used in BitCoins (<xref target="bitcoins" />). Future versions of this document will have the exact bit structure of the notification payloads, but for now, I will only describe the semantics of the content.</t>
+      <t> The puzzle introduced here extends the cookie mechanism from RFC 7296. It is loosely based on the proof-of-work technique used in BitCoins (<xref target="bitcoins" />).</t>
       <t> A puzzle is sent to the Initiator in two cases:<list style="symbols">
         <t> The Responder is so overloaded, than no half-open SAs are allowed to be created without the puzzle, or</t>
         <t> The Responder is not too loaded, but the rate-limiting in <xref target="ratelimit" /> prevents half-open SAs from being created with this particular peer address or prefix without first solving a puzzle.</t></list></t>
       <t> When the Responder decides to send the challenge notification in response to a IKE_SA_INIT request, the notification includes three fields:<list style="numbers">
         <t> Cookie - this is calculated the same as in RFC 7296. As in RFC 7296, the process of generating the cookie is not specified.</t>
         <t> Algorithm, this is the identifier of a PRF algorithm, one of those proposed by the Initiator in the SA payload.</t>
-        <t> Zero Bit Count. This is a number between 8 and 255 that represents the length of the zero-bit run at the end of the output of the PRF function calculated over the Keyed-Cookie payload that the Initiator is to send. Since the mechanism is supposed to be stateless for the Responder, the same value is sent to all Initiators who are receiving this challenge. The values 0 and 1-8 are explicitly excluded, because the value zero is meaningless, and the values 1-8 create a puzzle that is too easy to solve for it to make any difference in mitigating DDoS attacks.</t></list></t>
+        <t> Zero Bit Count. This is a number between 8 and 255 (or a special value - 0, see <xref target="diflevelinit" />) that represents the length of the zero-bit run at the end of the output of the PRF function calculated over the Keyed-Cookie payload that the Initiator is to send. Since the mechanism is supposed to be stateless for the Responder, either the same value is sent to all Initiators who are receiving this challenge or the value is somehow encoded in the cookie. The values 1-8 are explicitly excluded, because they create a puzzle that is too easy to solve for it to make any difference in mitigating DDoS attacks.</t></list></t>
       <t> Upon receiving this challenge payload, the Initiator attempts to calculate the PRF using different keys. When a key is found such that the resulting PRF output has a sufficient number of trailing zero bits, that result is sent to the Responder in a Keyed-Cookie notification, as described in <xref target="keyed_cookie" />.</t>
       <t> When receiving a request with a Keyed-Cookie, the Responder verifies two things:<list style="symbols">
         <t> That the cookie part is indeed valid.</t>
@@ -135,7 +135,7 @@
 <c>37dc96e4</c><c>1e24babc92234aa3a0000000</c><c>29</c><c>1237.170</c>
 <c>7a1a56d8</c><c>c98f0061e380a49e00000000</c><c>33</c><c>2726.150</c>
       </texttable>
-      <t> The figures above were obtained on a 2.4 GHz single core i5. Run times can be halved or quartered with multi-core code, but would be longer on mobile phone processors, even if those are multi-core as well. With these figures I believe that 20 bits is a reasonable choice for puzzle level difficulty for all Initiators, with 24 bits acceptable for specific hosts/prefixes.</t>
+      <t> The figures above were obtained on a 2.4 GHz single core i5. Run times can be halved or quartered with multi-core code, but would be longer on mobile phone processors, even if those are multi-core as well. With these figures 20 bits is believed to be a reasonable choice for puzzle level difficulty for all Initiators, with 24 bits acceptable for specific hosts/prefixes.</t>
       <section anchor="keyed_cookie" title="The Keyed-Cookie Notification">
         <t> To be added </t>
       </section>
@@ -169,7 +169,7 @@
       <t> Note that using counter-measures against an attack from a particular IP address may be enough to avoid the load on the half-open SA database and the amount of failed IKE_AUTH exchanges to never exceed the threshold of attack detection. This is a good thing as it prevent Initiators that are not close to the attackers from being affected.</t>
       <t> When there is no general DDoS attack, it is suggested that no Cookie or puzzles be used. At this point the only defensive measure is the monitoring, and setting a soft limit per peer IP or prefix. The soft limit can be set to 3-5, and the puzzle difficulty should be set to such a level (number of zero-bits) that all legitimate clients can handle  it without degraded user experience.</t>
       <t> As soon as any kind of attack is detected, either a lot of initiations from multiple sources or a lot of initiations from a few sources, it is best to begin by requiring stateless cookies from all Initiators. This will force the attacker to use real source addresses, and help avoid the need to impose a greater burden in the form of cookies on the general population of initiators. This makes the per-node or per-prefix soft limit more effective.</t>
-      <t> When Cookies are activated for all requests and the attacker is still managing to consume too many resources, the Responder MAY increase the difficulty of puzzles imposed on IKE_SA_INIT requests coming from suspicious nodes/prefixes. It should still be doable by all legitimate peers, but it can degrade experience, for example by taking up to 10 seconds to calculate the cookie extension.</t>
+      <t> When Cookies are activated for all requests and the attacker is still managing to consume too many resources, the Responder MAY increase the difficulty of puzzles imposed on IKE_SA_INIT requests coming from suspicious nodes/prefixes. It should still be doable by all legitimate peers, but it can degrade experience, for example by taking up to 10 seconds to solve the puzzle.</t>
       <t> If the load on the Responder is still too great, and there are many nodes causing multiple half-open SAs or IKE_AUTH failures, the Responder MAY impose hard limits on those nodes.</t>
       <t> If it turns out that the attack is very widespread and the hard caps are not solving the issue, a puzzle MAY be imposed on all Initiators. Note that this is the last step, and the Responder should avoid this if possible.</t>
       <section anchor="resumption" title="Session Resumption">
@@ -185,17 +185,16 @@
     </section>
     <section anchor="ops_cons" title="Operational Considerations">
       <t> [This section needs a lot of expanding]</t>
-      <t> Not all Initiators support the puzzles, but all initiators are supposed to support stateless cookies. If this notification is sent to a non-supporting but legitimate initiator, the exchange will fail. Responders are advised to first try to mitigate the DoS using stateless cookies, even imposing them generally before resorting to using puzzles.</t>
       <t> The difficulty level should be set by balancing the requirement to minimize the latency for legitimate initiators and making things difficult for attackers. A good rule of thumb is for taking about 1 second to solve the puzzle. A typical initiator or bot-net member in 2014 can perform slightly less than a million hashes per second per core, so setting the difficulty level to n=20 is a good compromise. It should be noted that mobile initiators, especially phones are considerably weaker than that. Implementations should allow administrators to set the difficulty level, and/or be able to set the difficulty level dynamically in response to load.</t>
       <t> Initiators should set a maximum difficulty level beyond which they won't try to solve the puzzle and log or display a failure message to the administrator or user.</t>
     </section>
 
     <section anchor="usingpuzzles" title="Using Puzzles in the Protocol">
         <section anchor="ikesainit" title="Puzzles in IKE_SA_INIT Exchange">
-            <t>IKE initiator indicates the desire to create new IKE SA by sending 
+            <t>IKE initiator indicates the desire to create a new IKE SA by sending 
             IKE_SA_INIT request message. The message may optionally contain 
-            COOKIE notification if this is a repeated request after the responder
-            asked initiator to return a cookie.</t>
+            COOKIE notification if this is a repeated request performed after the responder's
+            demand to return a cookie.</t>
             <figure align="center">
                 <artwork align="left"><![CDATA[
 HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
@@ -204,15 +203,15 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
             <t>According to the plan, described in <xref target="plan"/>, IKE responder 
             should monitor incoming requests to detect whether it is under attack.
             If the responder learns that (D)DoS attack is likely to be in progress, 
-            then it either requests the initiator to return cookie or, 
+            then it either requests the initiator to return a cookie or, 
             if the volume is so high, that puzzles need to be used for defense, 
-            it requests the initiator to solve the puzzle. 
+            it requests the initiator to solve a puzzle. 
             </t>
             <t>The responder MAY choose to process some fraction of IKE_SA_INIT requests 
             without presenting a puzzle even being under attack to allow legacy clients, 
-            that don't support puzzles, to have chances be served. The decision whether to process
+            that don't support puzzles, to have chances to be served. The decision whether to process
             any particular request must be probabilistic, with the probability
-            depending on the responder's load (i.e. on the volume of the attack).
+            depending on the responder's load (i.e. on the volume of attack).
             Only those requests, that contain COOKIE notification, must participate in this lottery.
             In other words, the responder MUST first perform return routability
             check before allowing any legacy client to be served if it is under attack.
@@ -229,7 +228,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                           <--   HDR, N(COOKIE), N(PUZZLE), [V+][N+]
                     ]]></artwork>
                 </figure>
-                <t>The presence of these notifications in IKE_SA_INIT response message 
+                <t>The presence of these notifications in an IKE_SA_INIT response message 
                 indicates to the initiator that it should solve the puzzle to get better 
                 chances to be served.
                 </t>
@@ -246,7 +245,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     from the initiator, however the more bits initiator is able to get,
                     the higher chances it will have to be served by the responder.
                     In diverse environments it is RECOMMENDED that the initiator sets
-                    difficulty level to 0.
+                    difficulty level to 0, unless the attack volume is very high.
                     </t>
                     <t>If the responder sets non-zero difficulty level, then the level should be 
                     determined by analyzing the volume of the attack. The responder MAY set different 
@@ -256,7 +255,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                 </section>
                 <section anchor="negotiation" title="Selecting Puzzle Algorithm">
                     <t>The PUZZLE notification also contains identificator of the algorithm, 
-                    that must be used by initiator in puzzle solution. 
+                    that must be used by initiator to compute puzzle. 
                     </t> 
                     <t>Cryptographic algorithm agility is considered an important feature 
                     for modern protocols (<xref target="ALG-AGILITY"/>). This feature ensures 
@@ -284,11 +283,10 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                 <section anchor="compcookie" title="Generating Cookie">
                     <t>If responder supports puzzles then cookie should be computed in such a manner, 
                     that the responder is able to learn some important information from the sole cookie, 
-                    when it is returned back by initiator. In particular - the responder 
+                    when it is later returned back by initiator. In particular - the responder 
                     should be able to learn the following information:
                     <list style="symbols">
-                        <t>Whether the puzzle was given to the initiator 
-                        or only the cookie was requested.</t>
+                        <t>Whether the puzzle was given to the initiator or only the cookie was requested.</t>
                         <t>The difficulty level of the puzzle given to the initiator.</t>
                         <t>The number of consecutive puzzles given to the initiator.</t>
                         <t>The amount of time the initiator spent to solve the puzzles. 
@@ -391,7 +389,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 Since no puzzle was given, the responder marks the request with the lowest
                 priority since the initiator spent a little resources creating it.
                 </t>
-                <t>If the responder learns from the cookie that the puzzle was given 
+                <t>If the responder learns from the cookie that puzzle was given 
                 to the initiator, then it looks for the PS payload to 
                 determine whether its request to solve the puzzle was honored or not.
                 If the incoming message doesn't contain PS payload, then
@@ -413,8 +411,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 difficulty level it can afford, then the priority of the request is calculated
                 based on the following considerations.
                 <list style="symbols">
-                    <t>The higher zero bits the initiator got, 
-                    the higher priority its request should achieve.</t>
+                    <t>The higher zero bits the initiator got, the higher priority its request should achieve.</t>
                     <t>The more consecutive puzzles the initiator solved (it must be
                     learned from the cookie), the higher priority its request should achieve.</t>
                     <t>The more time the initiator spent solving the puzzles (it must be
@@ -441,7 +438,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 <t>If initiator solved the puzzle, but didn't spend much resources
                 for it (the selected puzzle difficulty level appeared to be low and the initiator
                 solved it quickly), then the responder SHOULD give it another puzzle.
-                The more puzzles the initiator solve the higher would be its chances
+                The more puzzles the initiator solves the higher would be its chances
                 ro be served.</t>
                 <t>The details of how the responder takes decision on any particular
                 request are implementation dependant. The responder can collect all the
@@ -462,14 +459,14 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             At this point the initiator has already passed return routability check
             and has proved that it has performed some work to complete IKE_SA_INIT exchange.
             However, the initiator is not yet authenticated and this fact allows
-            malicious initiator to conduct an attack, described in <xref target="analysis"/>.
+            malicious initiator to perform an attack, described in <xref target="analysis"/>.
             Unlike DoS attack in IKE_SA_INIT exchange, which is targeted on the responder's memory
             resources, the goal of this attack is to exhaust responder's CPU power.
             The attack is performed by sending the first IKE_AUTH message containing garbage.
             This costs nothing to the initiator, but the responder has to do
             relatively costly operations of computing the Diffie-Hellman shared secret 
             and deriving SK_* keys to be able to verify authenticity of the message.
-            If the responder doesn't save the computed keys after unsuccessful
+            If the responder doesn't keep the computed keys after unsuccessful
             verification of IKE_AUTH message, then the attack can be repeated several times
             on the same IKE SA.
             </t>
@@ -504,7 +501,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                     <t>The difficulty level of the puzzle in IKE_AUTH should be chosen so,
                     that the initiator would spend more time to solve the puzzle,
                     than the responder to compute Diffie-Hellman shared secret and
-                    the keys, needed to decrypt and verify IKE_AUTH message.
+                    the keys, needed to decrypt and verify the IKE_AUTH request message.
                     On the other hand, the difficulty level should not be too high,
                     otherwise the legitimate clients would experience additional
                     delay while establishing IKE SA. 
@@ -545,9 +542,9 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 so that the responder would be able to verify the puzzle before calculating
                 the Diffie-Hellman shared secret and the SK_* keys.
                 </t>
-                <t>If IKE Fragmentation is used, then the PS payload
-                MUST be present only in the first IKE Fragment message,
-                in accordance with the Section 2.5.3 of <xref target="RFC7383"/>.
+                <t>If IKE Fragmentation <xref target="RFC7383"/> is used in IKE_AUTH exchange, 
+                then the PS payload MUST be present only in the first IKE Fragment message,
+                in accordance with the Section 2.5.3 of RFC7383.
                 Note, that calculation of the puzzle in the IKE_AUTH exchange doesn't 
                 depend on the content of the IKE_AUTH message (see <xref target="comppuzzleauth"/>).
                 Thus the responder has to solve the puzzle only once and the solution is valid 
@@ -576,8 +573,8 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 the responder SHOULD verify the solution before performing computationly
                 intensive operations - computing the Diffie-Hellman shared secret
                 and the SK_* keys. The responder MUST silently discard the received
-                message if the puzzle solution is not correct. If the puzzle is
-                successfully verified and the SK_* key are calculated, but 
+                message if the puzzle solution is not correct (has insufficient number of trailing zero bits). 
+                If the puzzle is successfully verified and the SK_* key are calculated, but 
                 the message authenticity check fails, the responder SHOULD 
                 save the calculated keys in the IKE SA state while waiting for 
                 the retransmissions from the initiator. In this case
@@ -592,8 +589,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 choose to keep the received fragments until the first
                 fragment containing the solution to the puzzle is received.
                 However in this case the responder SHOULD NOT try to 
-                verify authenticity (that would require the calculation
-                of the SK_* keys) untill the first fragment with the PS
+                verify authenticity of the kept fragments untill the first fragment with the PS
                 payload is received and the solution to the puzzle is verified.
                 After successful verification of the puzzle the responder would
                 calculate the SK_* key and verify authenticity of the collected
@@ -608,7 +604,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         and check the liveness of the peer. With a typical setup and typical Child SA lifetimes 
         there must be no more than a few such exchanges in a minute, often less.
         Some of these exchanges require relatively little resources (like liveness check),
-        while others may be resourse consuming (like creating or rekeying Child SA with
+        while others may be resource consuming (like creating or rekeying Child SA with
         Diffie-Hellman exchange).</t>
 
         <t>Since any endpoint can initiate new exchange, there is a possibility that a peer
@@ -684,7 +680,8 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 <t>Difficulty (1 octet) - Difficulty Level of the puzzle. Specifies minimum number 
                 of trailing zero bit, that the result of PRF must contain.
                 Value 0 means that the responder doesn't request any specific difficulty
-                level and the initiator is free to select appropriate difficulty level of its own.
+                level and the initiator is free to select appropriate difficulty level of its own
+                (see <xref target="diflevelinit" /> for details).
                 </t>
             </list></t>
             <t>This notification contains no data.</t>
@@ -777,8 +774,8 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
           <date month='December' day='29' year='2014' />
           <abstract><t>Many IETF protocols use cryptographic algorithms to provide confidentiality, integrity, or non-repudiation.  Communicating peers must support the same set of cryptographic algorithms for these mechanisms to work properly.  This memo provides guidelines to ensure that protocols have the ability to migrate from one algorithm suite to another over time.</t></abstract>
         </front>
-        <seriesInfo name='Internet-Draft' value='draft-iab-crypto-alg-agility-02' />
-        <format type='TXT' target='http://www.ietf.org/internet-drafts/draft-iab-crypto-alg-agility-02.txt' />
+        <seriesInfo name='Internet-Draft' value='draft-iab-crypto-alg-agility-05' />
+        <format type='TXT' target='http://www.ietf.org/internet-drafts/draft-iab-crypto-alg-agility-05.txt' />
       </reference>
       <reference anchor='NULL-AUTH'>
         <front>
@@ -792,9 +789,9 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
           <date month='January' day='13' year='2015' />
           <abstract><t>This document specifies the NULL Authentication Method and the ID_NULL Identification Payload ID Type for the IKEv2 Protocol.  This allows two IKE peers to establish single-side authenticated or mutual un-authenticated IKE sessions for those use cases where a peer is unwilling or unable to authenticate itself.  This ensures IKEv2 can be used for Opportunistic Security (also known as Opportunsitic Encryption) to defend against Pervasive Monitoring attacks without the need to sacrifice anonimity.</t></abstract>
         </front>
-        <seriesInfo name='Internet-Draft' value='draft-ietf-ipsecme-ikev2-null-auth-02' />
+        <seriesInfo name='Internet-Draft' value='draft-ietf-ipsecme-ikev2-null-auth-07' />
         <format type='TXT'
-                target='http://www.ietf.org/internet-drafts/draft-ietf-ipsecme-ikev2-null-auth-02.txt' />
+                target='http://www.ietf.org/internet-drafts/draft-ietf-ipsecme-ikev2-null-auth-07.txt' />
       </reference>
     </references>
     <!-- ====================================================================== -->
