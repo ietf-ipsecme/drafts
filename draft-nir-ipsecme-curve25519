@@ -18,7 +18,7 @@
 <?rfc sortrefs="yes" ?>
 <rfc ipr="trust200902" docName="draft-nir-ipsecme-curve25519-xx" category="std">
   <front>
-    <title abbrev="Curve25519 for IKEv2">Using Curve25519 for IKEv2 Key Agreement</title>
+    <title abbrev="SafeCurves for IKEv2">New Safe Curves for IKEv2 Key Agreement</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
       <organization abbrev="Check Point">Check Point Software Technologies Ltd.</organization>
       <address>
@@ -41,16 +41,18 @@
     <area>Security Area</area>
     <keyword>Internet-Draft</keyword>
     <abstract>
-      <t> This document describes the use of Curve25519 for ephemeral key 
-        exchange in the Internet Key Exchange (IKEv2) protocol.</t>
+      <t> This document describes the use of Curve25519 and Curve448 
+        ("Goldilocks") for ephemeral key exchange in the Internet Key Exchange 
+        (IKEv2) protocol.</t>
     </abstract>
   </front>
   <middle>
     <!-- ====================================================================== -->
     <section anchor="introduction" title="Introduction">
-      <t> <xref target="CFRG-Curves" /> specifies a new elliptic curve function 
-        for use in cryptographic applications. Curve25519 is a Diffie-Hellman 
-        function designed with performance and security in mind.</t>
+      <t> <xref target="CFRG-Curves" /> specifies two new elliptic curve 
+        functions for use in cryptographic applications. Curve25519 and
+        Curve448 (also known as "Goldilocks") are Diffie-Hellman functions 
+        designed with performance and security in mind.</t>
       <t> Almost ten years ago <xref target="RFC4753" /> specified the first 
         elliptic curve Diffie-Hellman groups for the Internet Key Exchange 
         protocol (IKEv2 - <xref target="RFC7296" />). These were the so-called 
@@ -59,7 +61,7 @@
         write constant-time implementations free from side-channel attacks. 
         This document defines such a curve for use in IKE. See 
         <xref target="Curve25519" /> for details about the speed and security 
-        of this curve.</t>
+        of the Curve25519 function.</t>
       <section anchor="mustshouldmay" title="Conventions Used in This Document">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", 
           "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this 
@@ -67,36 +69,44 @@
           <xref target="RFC2119"/>.</t>
       </section>
     </section>
-    <section anchor="crypto" title="Curve25519">
-      <t> All cryptographic computations are done using the Curve25519 function 
-        defined in <xref target="CFRG-Curves" />.  In this document, this 
-        function is considered a black box that takes for input a (secret key, 
-        public key) pair and outputs a public key.  Public keys are defined as 
-        strings of 32 octets.  Secret keys are defined as 255-bit numbers such 
-        that high-order bit (bit 254) is set, and the three lowest-order bits 
-        are unset.  In addition, a common public key, denoted by G, is shared 
-        by all users.</t>
-      <t> An ephemeral Diffie-Hellman key exchange using Curve25519 goes as 
-        follows: Each party picks a secret key d uniformly at random and 
-        computes the corresponding public key:<figure>
+    <section anchor="crypto" title="Curve25519 &amp; Curve448">
+      <t> All cryptographic computations are done using the Curve25519 and 
+        Curve448 functions defined in <xref target="CFRG-Curves" />.  In this 
+        document, these functions are considered black boxes that take for 
+        input a (secret key, public key) pair and output a public key. Public 
+        keys for are defined as strings of 32 octets. A common public key, 
+        denoted below as G (or "base point" in the curves document) is shared 
+        by all users. Since the functions only use the u-coordinate of the 
+        public key, only the u coordinate of the base points is necessary.
+        For Curve25519 Gu=9 ; for Curve448 Gu=5.</t> 
+      <t> For Curve25519 secret keys are defined as 255-bit numbers such that 
+        the high-order bit (bit 254) is set, and the three lowest-order bits 
+        are unset.</t>
+      <t> For Curve448 secret keys are defined as 448-bit numbers such that the
+        high-order bit (bit 447) is set, and the two lowest-order bits are 
+        unset.</t>
+      <t> An ephemeral Diffie-Hellman key exchange using Curve25519 or Curve448 
+        goes as follows: Each party picks a secret key d uniformly at random and 
+        computes the corresponding public key. "curve_function" is used below
+        to denote either Curve25519 or Curve448:<figure>
       		<artwork><![CDATA[
-   x_mine = Curve25519(d, G)
+   x_mine = curve_function(d, G)
 ]]></artwork></figure></t>
       <t> Parties exchange their public keys (see <xref target="ke_format" />) 
         and compute a shared secret:<figure>
       		<artwork><![CDATA[
-   SHARED_SECRET = Curve25519(d, x_peer).
+   SHARED_SECRET = curve_function(d, x_peer).
 ]]></artwork></figure></t>
       <t> This shared secret is used directly as the value denoted g^ir in 
-        section 2.14 of RFC 7296. It is always exactly 32 octets when 
-        Curve25519 is used.</t>
+        section 2.14 of RFC 7296. It is always exactly 32 octets when these
+        functions are used.</t>
       <t> A complete description of the Curve25519 function, as well as a few 
         implementation notes, are provided in <xref target="curve25519func" />.</t>
     </section> 
     <section anchor="in_ikev2" title="Use and Negotiation in IKEv2">
-      <t> The use of Curve25519 in IKEv2 is negotiated using a Transform Type 4 
-        (Diffie-Hellman group) in the SA payload of either an IKE_SA_INIT or a 
-        CREATE_CHILD_SA exchange.</t>
+      <t> The use of Curve25519 and Curve448 in IKEv2 is negotiated using a 
+        Transform Type 4 (Diffie-Hellman group) in the SA payload of either an 
+        IKE_SA_INIT or a CREATE_CHILD_SA exchange.</t>
       <section anchor="ke_format" title="Key Exchange Payload">
         <t> The diagram for the Key Exchange Payload from section 3.4 of RFC 
           7296 is copied below for convenience:<figure>
@@ -114,9 +124,10 @@
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ]]></artwork></figure></t>
         <t><list style="symbols">
-          <t> Payload Length - Since a Curve25519 public key is 32 octets, the 
-            Payload Length is always 40.</t>
-          <t> The Diffie-Hellman Group Num is xx for Curve25519 (TBA by IANA)</t>
+          <t> Payload Length - Since the public key is 32 octets, the Payload
+            Length field always contains 40.</t>
+          <t> The Diffie-Hellman Group Num is xx for Curve25519, or yy for
+            Curve448 (both TBA by IANA).</t>
           <t> The Key Exchange Data is 32 octets encoded as an array of bytes 
             in little-endian order as described in section 8 of 
             <xref target="CFRG-Curves" /></t></list></t>
@@ -124,40 +135,44 @@
       <section anchor="rec_test" title="Recipient Tests">
         <t> This section describes the checks that a recipient of a public key 
           needs to perform. It is the equivalent of the tests described in 
-          <xref target="RFC6989" /> for other Diffie-Hellman groups.</t>
-        <t> Curve25519 was designed in a way that the result of Curve25519(x, d) 
-          will never reveal information about d, provided is was chosen as 
+          <xref target="RFC6989" /> for other Diffie-Hellman groups. We use 
+          "func" to denote either Curve25519 or Curve448, as the tests are 
+          similar to both.</t>
+        <t> Both functions were designed in a way that the result of func(d, x) 
+          will never reveal information about d, provided it was chosen as 
           prescribed, for any value of x.</t>
         <t> Define legitimate values of x as the values that can be obtained as 
-          x = Curve25519(G, d') for some d, and call the other values 
-          illegitimate.  The definition of the Curve25519 function shows that 
-          legitimate values all share the following property: the high-order 
-          bit of the last byte is not set.</t>
-        <t> Since there are some implementation of the Curve25519 function that 
-          impose this restriction on their input and others that don't, 
-          implementations of Curve25519 in IKE SHOULD reject public keys when 
-          the high-order bit of the last byte is set (in other words, when the 
-          value of the leftmost byte is greater than 0x7F) in order to prevent 
-          implementation fingerprinting.</t>
+          x = func(d, G) for some d, and call the other values illegitimate.
+          The definitions of the functions show that legitimate values all 
+          share the following property: the high-order bit of the last byte is 
+          not set.</t>
+        <t> Since there are some implementation of these functions that impose 
+          this restriction on their input and others that don't, IKEv2 
+          implementations SHOULD reject public keys when the high-order bit of 
+          the last byte is set (in other words, when the value of the leftmost 
+          byte is greater than 0x7F) in order to prevent implementation
+          fingerprinting.</t>
         <t> Other than this recommended check, implementations do not need to 
           ensure that the public keys they receive are legitimate: this is not 
-          necessary for security with Curve25519.</t>
+          necessary for security.</t>
       </section>
     </section> 
     <section anchor="security" title="Security Considerations">
       <t> Curve25519 is designed to facilitate the production of 
-        high-performance constant-time implementations of the Curve25519 
-        function. Implementors are encouraged to use a constant-time 
-        implementation of the Curve25519 function.  This point is of crucial 
-        importance if the implementation chooses to reuse its supposedly 
-        ephemeral key pair for many key exchanges, which some implementations 
-        do in order to improve performance.</t>
+        high-performance constant-time implementations. Implementors are 
+        encouraged to use a constant-time implementation of the Curve25519 
+        function.  This point is of crucial importance if the implementation 
+        chooses to reuse its supposedly ephemeral key pair for many key 
+        exchanges, which some implementations do in order to improve 
+        performance. The same is true for Curve448.</t>
       <t> Curve25519 is believed to be at least as secure as the 256-bit random 
-        ECP group (group 19) defined in RFC 4753, also known as NIST P-256.  
-        While the NIST curves are advertised as being chosen verifiably at 
+        ECP group (group 19) defined in RFC 4753, also known as NIST P-256 or 
+        secp256r1. Curve448 is believed to be more secure than the 384-bit random ECP 
+        group (group 20), also known as NIST P-384 or secp384r1.</t>
+      <t> While the NIST curves are advertised as being chosen verifiably at 
         random, there is no explanation for the seeds used to generate them. In 
-        contrast, the process used to pick Curve25519 is fully documented and 
-        rigid enough so that independent verification has been done.  This is 
+        contrast, the process used to pick these curves is fully documented and 
+        rigid enough so that independent verification has been done. This is 
         widely seen as a security advantage for Curve25519, since it prevents 
         the generating party from maliciously manipulating the parameters.</t>
       <t> Another family of curves available in IKE, generated in a fully 
@@ -168,16 +183,17 @@
         P-256, which is itself slower than Curve25519.</t>
     </section>
     <section anchor="iana" title="IANA Considerations">
-      <t> IANA is requested to assign one value from the IKEv2 
-        "Transform Type 4 - Diffie-Hellman Group Transform IDs" registry, with 
-        name Curve25519, and this document as reference. The Recipient Tests 
-        field should also point to this document.</t>
+      <t> IANA is requested to assign two values from the IKEv2 "Transform Type 
+        4 - Diffie-Hellman Group Transform IDs" registry, with names 
+        "Curve25519" and "Curve448" and this document as reference. The 
+        Recipient Tests field should also point to this document.</t>
     </section>  
     <section anchor="ack" title="Acknowledgements">
-      <t> Curve25519 was designed by D. J. Bernstein and Tanja Lange. The 
-        specification of wire format is by Sean Turner, Rich Salz, and Watson 
-        Ladd, with Adam Langley editing the current document. Much of the text 
-        in this document is copied from Simon's draft for the TLS working group.</t>
+      <t> Curve25519 was designed by D. J. Bernstein and Tanja Lange. 
+        "Ed448-Goldilocks" is by Mike Hamburg. The specification of wire 
+        format is by Sean Turner, Rich Salz, and Watson Ladd, with Adam Langley 
+        editing the current document. Much of the text in this document is 
+        copied from Simon's draft for the TLS working group.</t>
     </section>    
   </middle>
   <!-- ====================================================================== -->
@@ -234,10 +250,12 @@
         <front>
           <title>Elliptic Curves for Security</title>
             <author initials="A" surname="Langley" fullname="Adam Langley"></author>
-            <date month="January" day="6" year="2015"/>
+            <author initials="R" surname="Salz" fullname="Rich Salz"></author>
+            <author initials="S" surname="Turner" fullname="Sean Turner"></author>
+            <date month="March" day="24" year="2015"/>
           </front>
-        <seriesInfo name="Internet-Draft" value="draft-agl-cfrgcurve-00"/>
-        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-agl-cfrgcurve-00.txt"/>
+        <seriesInfo name="Internet-Draft" value="draft-irtf-cfrg-curves-02"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-irtf-cfrg-curves-02.txt"/>
       </reference>
     </references>
     <references title="Informative References"> 
