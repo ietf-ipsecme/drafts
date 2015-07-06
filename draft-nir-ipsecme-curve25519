@@ -189,11 +189,11 @@
         Recipient Tests field should also point to this document.</t>
     </section>  
     <section anchor="ack" title="Acknowledgements">
-      <t> Curve25519 was designed by D. J. Bernstein and Tanja Lange. 
-        "Ed448-Goldilocks" is by Mike Hamburg. The specification of wire 
-        format is by Sean Turner, Rich Salz, and Watson Ladd, with Adam Langley 
-        editing the current document. Much of the text in this document is 
-        copied from Simon's draft for the TLS working group.</t>
+      <t> Curve25519 was designed by D. J. Bernstein and Tanja Lange. Curve448
+        ("Goldilocks") is by Mike Hamburg. The specification of wire format is
+        Sean Turner, Rich Salz, and Watson Ladd, with Adam Langley editing the 
+        current document. Much of the text in this document is copied from 
+        Simon's draft for the TLS working group.</t>
     </section>    
   </middle>
   <!-- ====================================================================== -->
