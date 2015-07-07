@@ -51,7 +51,7 @@
     <section anchor="introduction" title="Introduction">
       <t> <xref target="CFRG-Curves" /> specifies two new elliptic curve 
         functions for use in cryptographic applications. Curve25519 and
-        Curve448 (also known as "Goldilocks") are Diffie-Hellman functions 
+        Curve448 (also known as "Goldilocks" and "Ed448-Goldilocks") are Diffie-Hellman functions 
         designed with performance and security in mind.</t>
       <t> Almost ten years ago <xref target="RFC4753" /> specified the first 
         elliptic curve Diffie-Hellman groups for the Internet Key Exchange 
