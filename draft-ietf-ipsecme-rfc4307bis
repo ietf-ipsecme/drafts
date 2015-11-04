@@ -18,7 +18,8 @@
 
 <rfc ipr="trust200902" docName="draft-ietf-ipsecme-rfc4307bis-01" category="std">
   <front>
-    <title abbrev="IKEv2 Cryptographic Algorithms">Cryptographic Algorithms for Use in the Internet Key Exchange Version 2 (IKEv2)</title>
+    <title abbrev="IKEv2 Cryptographic Algorithms">Cryptographic Algorithms for Use in the Internet Key Exchange 
+      Version 2 (IKEv2)</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
       <organization abbrev="Check Point">Check Point Software Technologies Ltd.</organization>
       <address>
@@ -74,30 +75,63 @@
     <!-- <workgroup>IPSecME Working Group</workgroup> -->
     <keyword>Internet-Draft</keyword>
     <abstract>
-      <t> The IPsec series of protocols makes use of various cryptographic algorithms in order to provide security services.  The Internet Key Exchange protocol provides a mechanism to negotiate which algorithms should be used in any given association.  However, to ensure interoperability between disparate implementations, it is necessary to specify a set of mandatory-to-implement algorithms to ensure that there is at least one algorithm that all implementations will have available.  This document defines the current set of algorithms that are mandatory to implement as part of IKEv2, as well as algorithms that should be implemented because they may be promoted to mandatory at some future time.</t>
+      <t> The IPsec series of protocols makes use of various cryptographic algorithms in order to provide security 
+        services.  The Internet Key Exchange protocol provides a mechanism to negotiate which algorithms should be used 
+        in any given association.  However, to ensure interoperability between disparate implementations, it is 
+        necessary to specify a set of mandatory-to-implement algorithms to ensure that there is at least one algorithm 
+        that all implementations will have available.  This document defines the current set of algorithms that are 
+        mandatory to implement as part of IKEv2, as well as algorithms that should be implemented because they may be 
+        promoted to mandatory at some future time.</t>
     </abstract>
   </front>
   <middle>
     <!-- ====================================================================== -->
     <section anchor="introduction" title="Introduction">
-      <t> The Internet Key Exchange protocol <xref target="RFC7296" /> provides for the negotiation of cryptographic algorithms between both endpoints of a cryptographic association.  Different implementations of IPsec and IKE may provide different algorithms.  However, the IETF desires that all implementations should have some way to interoperate.  In particular, this requires that IKE define a set of mandatory-to-implement algorithms because IKE itself uses such algorithms as part of its own negotiations.  This requires that some set of algorithms be specified as "mandatory-to-implement" for IKE.</t>
-      <t> The nature of cryptography is that new algorithms surface continuously and existing algorithms are continuously attacked.  An algorithm believed to be strong today may be demonstrated to be weak tomorrow.  Given this, the choice of mandatory-to-implement algorithm should be conservative so as to minimize the likelihood of it being compromised quickly.  Thought should also be given to performance considerations as many uses of IPsec will be in environments where performance is a concern.</t>
-      <t> Finally, we need to recognize that the mandatory-to-implement algorithm(s) may need to change over time to adapt to the changing world.  For this reason, the selection of mandatory-to-implement algorithms was removed from the main IKEv2 specification and placed in this document.  As the choice of algorithm changes, only this document should need to be updated.</t>
-      <t> Ideally, the mandatory-to-implement algorithm of tomorrow should already be available in most implementations of IPsec by the time it is made mandatory.  To facilitate this, we will attempt to identify those algorithms (that are known today) in this document.  There is no guarantee that the algorithms we believe today may be mandatory in the future will in fact become so.  All algorithms known today are subject to cryptographic attack and may be broken in the future.</t>
+      <t> The Internet Key Exchange protocol <xref target="RFC7296" /> provides for the negotiation of cryptographic 
+        algorithms between both endpoints of a cryptographic association.  Different implementations of IPsec and IKE 
+        may provide different algorithms.  However, the IETF desires that all implementations should have some way to 
+        interoperate.  In particular, this requires that IKE define a set of mandatory-to-implement algorithms because 
+        IKE itself uses such algorithms as part of its own negotiations.  This requires that some set of algorithms be 
+        specified as "mandatory-to-implement" for IKE.</t>
+      <t> The nature of cryptography is that new algorithms surface continuously and existing algorithms are 
+        continuously attacked.  An algorithm believed to be strong today may be demonstrated to be weak tomorrow.  
+        Given this, the choice of mandatory-to-implement algorithm should be conservative so as to minimize the 
+        likelihood of it being compromised quickly.  Thought should also be given to performance considerations as 
+        many uses of IPsec will be in environments where performance is a concern.</t>
+      <t> Finally, we need to recognize that the mandatory-to-implement algorithm(s) may need to change over time to 
+        adapt to the changing world.  For this reason, the selection of mandatory-to-implement algorithms was removed 
+        from the main IKEv2 specification and placed in this document.  As the choice of algorithm changes, only this 
+        document should need to be updated.</t>
+      <t> Ideally, the mandatory-to-implement algorithm of tomorrow should already be available in most implementations 
+        of IPsec by the time it is made mandatory.  To facilitate this, we will attempt to identify those algorithms 
+        (that are known today) in this document.  There is no guarantee that the algorithms we believe today may be 
+        mandatory in the future will in fact become so.  All algorithms known today are subject to cryptographic attack 
+        and may be broken in the future.</t>
     </section>
     <section anchor="mustshouldmay" title="Conventions Used in This Document">
-      <t> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="RFC2119"/>.</t>
+      <t> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", 
+        "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="RFC2119"/>.</t>
       <t> We define some additional terms here:</t>
       <texttable anchor="tbl" style="none" suppress-title="true">
         <ttcol align="left" width="12%"/>
         <ttcol align="left" />
-        <c>SHOULD+</c><c>This term means the same as SHOULD.  However, it is likely that an algorithm marked as SHOULD+ will be promoted at some future time to be a MUST.</c>
-        <c>SHOULD-</c><c>This term means the same as SHOULD.  However, an algorithm marked as SHOULD- may be deprecated to a MAY in a future version of this document.</c>
-        <c>MUST-</c><c>This term means the same as MUST.  However, we expect at some point that this algorithm will no longer be a MUST in a future document.  Although its status will be determined at a later time, it is reasonable to expect that if a future revision of a document alters the status of a MUST- algorithm, it will remain at least a SHOULD or a SHOULD-.</c></texttable>
+        <c>SHOULD+</c><c>This term means the same as SHOULD.  However, it is likely that an algorithm marked as SHOULD+ 
+          will be promoted at some future time to be a MUST.</c>
+        <c>SHOULD-</c><c>This term means the same as SHOULD.  However, an algorithm marked as SHOULD- may be deprecated 
+          to a MAY in a future version of this document.</c>
+        <c>MUST-</c><c>This term means the same as MUST.  However, we expect at some point that this algorithm will no 
+          longer be a MUST in a future document.  Although its status will be determined at a later time, it is 
+          reasonable to expect that if a future revision of a document alters the status of a MUST- algorithm, it will 
+          remain at least a SHOULD or a SHOULD-.</c>
+      </texttable>
     </section>
     <section anchor="algs" title="Algorithm Selection">
       <section anchor="algs_enc" title="IKEv2 Transform Type 1 Algorithms">
-        <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. References to the specifications defining these algorithms and the ones in the following subsections are in the IANA registry <xref target="IKEV2-IANA"/>. Some of these algorithms are Authenticated Encryption with Associated Data (AEAD - <xref target="RFC5282" />). Algorithms that are not AEAD MUST be used in conjunction with the integrity algorithms in <xref target="algs_integ"/>.</t>
+        <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. 
+          References to the specifications defining these algorithms and the ones in the following subsections are in 
+          the IANA registry <xref target="IKEV2-IANA"/>. Some of these algorithms are Authenticated Encryption with 
+          Associated Data (AEAD - <xref target="RFC5282" />). Algorithms that are not AEAD MUST be used in conjunction 
+          with the integrity algorithms in <xref target="algs_integ"/>.</t>
         <texttable anchor="tbl_enc" suppress-title="true">
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
@@ -113,7 +147,9 @@
         </texttable>
       </section>
       <section anchor="algs_integ" title="IKEv2 Transform Type 3 Algorithms">
-        <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. References to the specifications defining these algorithms are in the IANA registry. When an AEAD algorithm (see <xref target="algs_enc"/>) is used, no algorithm from this table needs to be used.</t>
+        <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. References 
+          to the specifications defining these algorithms are in the IANA registry. When an AEAD algorithm (see <xref 
+          target="algs_enc"/>) is used, no algorithm from this table needs to be used.</t>
         <texttable anchor="tbl_alg3" suppress-title="true">
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
@@ -138,7 +174,9 @@
         </texttable>
       </section>
       <section anchor="algs_dh" title="Diffie-Hellman Groups">
-        <t> There are several Modular Exponential (MODP) groups and several Elliptic Curve groups (ECC) that are defined for use in IKEv2.  They are defined in both the [IKEv2] base document and in extensions documents. They are identified by group number.</t>
+        <t> There are several Modular Exponential (MODP) groups and several Elliptic Curve groups (ECC) that are 
+          defined for use in IKEv2.  They are defined in both the [IKEv2] base document and in extensions documents. 
+          They are identified by group number.</t>
         <texttable anchor="tbl_dh" suppress-title="true">
           <ttcol align="left">Number</ttcol>
           <ttcol align="left">Description</ttcol>
@@ -152,14 +190,23 @@
     </section>
 
     <section anchor="security" title="Security Considerations">
-      <t> The security of cryptographic-based systems depends on both the strength of the cryptographic algorithms chosen and the strength of the keys used with those algorithms.  The security also depends on the engineering of the protocol used by the system to ensure that there are no non-cryptographic ways to bypass the security of the overall system.</t>
-      <t> This document concerns itself with the selection of cryptographic algorithms for the use of IKEv2, specifically with the selection of "mandatory-to-implement" algorithms.  The algorithms identified in this document as "MUST implement" or "SHOULD implement" are not known to be broken at the current time, and cryptographic research so far leads us to believe that they will likely remain secure into the foreseeable future.  However, this isn't necessarily forever.  We would therefore expect that new revisions of this document will be issued from time to time that reflect the current best practice in this area.</t>
+      <t> The security of cryptographic-based systems depends on both the strength of the cryptographic algorithms 
+        chosen and the strength of the keys used with those algorithms.  The security also depends on the engineering 
+        of the protocol used by the system to ensure that there are no non-cryptographic ways to bypass the security 
+        of the overall system.</t>
+      <t> This document concerns itself with the selection of cryptographic algorithms for the use of IKEv2, 
+        specifically with the selection of "mandatory-to-implement" algorithms.  The algorithms identified in this 
+        document as "MUST implement" or "SHOULD implement" are not known to be broken at the current time, and 
+        cryptographic research so far leads us to believe that they will likely remain secure into the foreseeable 
+        future.  However, this isn't necessarily forever.  We would therefore expect that new revisions of this 
+        document will be issued from time to time that reflect the current best practice in this area.</t>
     </section>
     <section anchor="iana" title="IANA Considerations">  
             <t>This document makes no requests of IANA.</t>
     </section>
     <section anchor="ack" title="Acknowledgements">
-      <t> The first version of this document was RFC 4307 by Jeffrey I. Schiller of the Massachusetts Institute of Technology (MIT). Much of the text has been copied verbatim.</t>
+      <t> The first version of this document was RFC 4307 by Jeffrey I. Schiller of the Massachusetts Institute of 
+        Technology (MIT). Much of the original text has been copied verbatim.</t>
     </section>
   </middle>
   <!-- ====================================================================== -->
