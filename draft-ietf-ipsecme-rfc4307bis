@@ -143,8 +143,15 @@
           <c>ENCR_AES_CCM_8</c><c>SHOULD</c><c>Yes</c><c>[1]</c>	
           <c>ENCR_3DES</c><c>MAY</c><c>No</c><c/>
           <c>ENCR_DES</c><c>MUST NOT</c><c>No</c><c/>
-          <postamble> [1] - Both 256-bit and 128-bit keys should be supported at the same level of requirement.</postamble>
+          <postamble> [1] - This requirement level is for 128-bit keys. 256-bit keys are at MAY. 192-bit keys can 
+            safely be ignored.</postamble>
         </texttable>
+        <t> Explanation about AES-CBC is TBD.</t>
+        <t> Explanation about ChaCha20 is TBD.</t>
+        <t> Explanation about AES-GCM is TBD.</t>
+        <t> Explanation about AES-CCM is TBD.</t>
+        <t> Explanation about 3DES is TBD.</t>
+        <t> Explanation about DES is TBD.</t>
       </section>
       <section anchor="algs_integ" title="IKEv2 Transform Type 3 Algorithms">
         <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. References 
@@ -154,12 +161,14 @@
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
           <c>AUTH_HMAC_SHA2_256_128</c><c>MUST</c>
-          <c>AUTH_HMAC_SHA2_384_192</c><c>SHOULD+</c>
+          <c>AUTH_HMAC_SHA2_512_256</c><c>SHOULD+</c>
           <c>AUTH_HMAC_SHA1_96</c><c>MUST-</c>
-          <c>AUTH_AES_128_GMAC</c><c>MAY</c>
           <c>AUTH_AES_XCBC_96</c><c>MAY</c>
-          <c>AUTH_HMAC_MD5_96</c><c>MAY</c>
         </texttable>
+        <t> Explanation about SHA-256 is TBD.</t>
+        <t> Explanation about SHA-512 is TBD.</t>
+        <t> Explanation about SHA-1 is TBD.</t>
+        <t> Explanation about AES-XCBC is TBD.</t>
       </section>
       <section anchor="algs_prf" title="IKEv2 Transform Type 2 Algorithms">
         <t> Transform Type 2 Algorithms are pseudo-random functions used to generate random values when needed.</t>
@@ -167,11 +176,14 @@
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
           <c>PRF_HMAC_SHA2_256</c><c>MUST</c>
-          <c>PRF_HMAC_SHA2_384</c><c>SHOULD+</c>
+          <c>PRF_HMAC_SHA2_512</c><c>SHOULD+</c>
           <c>PRF_HMAC_SHA1</c><c>MUST-</c>
           <c>PRF_AES128_CBC</c><c>MAY</c>
-          <c>PRF_HMAC_MD5</c><c>MAY</c>
         </texttable>
+        <t> Explanation about SHA-256 is TBD.</t>
+        <t> Explanation about SHA-512 is TBD.</t>
+        <t> Explanation about SHA-1 is TBD.</t>
+        <t> Explanation about AES-XCBC is TBD.</t>
       </section>
       <section anchor="algs_dh" title="Diffie-Hellman Groups">
         <t> There are several Modular Exponential (MODP) groups and several Elliptic Curve groups (ECC) that are 
@@ -183,9 +195,13 @@
           <ttcol align="left">Status</ttcol>
           <c>14</c><c>2048-bit MODP Group</c><c>MUST</c>
           <c>19</c><c>256-bit random ECP group</c><c>SHOULD</c>
-          <c>20</c><c>384-bit random ECP group</c><c>MAY</c>
           <c>2</c><c>1024-bit MODP Group</c><c>SHOULD NOT</c>
+          <c>1</c><c>768-bit MODP Group</c><c>MUST NOT</c>
         </texttable>
+        <t> Explanation about Group 14 is TBD.</t>
+        <t> Explanation about Group 19 is TBD.</t>
+        <t> Explanation about Group 2 is TBD.</t>
+        <t> Explanation about Group 1 is TBD.</t>
       </section>
     </section>
 
