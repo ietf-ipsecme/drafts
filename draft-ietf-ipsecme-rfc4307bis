@@ -107,6 +107,10 @@
         (that are known today) in this document.  There is no guarantee that the algorithms we believe today may be 
         mandatory in the future will in fact become so.  All algorithms known today are subject to cryptographic attack 
         and may be broken in the future.</t>
+      <t>The recommendations of this document target IKEv2 implementers. In other words, the recommendations should not be considered for IKEv2 configuration, as a preference for some algorithms.</t>
+      <t>IKEv1 is out of scope of this document. IKEv1 is deprecated and the recommendations of this document MUST NOT be considered for IKEv1.</t>
+      <t>This document only provides recommendations for the mandatory-to-implement algorithms or algorithms too weak that are recommended not to be implemented. As a result, any algorithm not mentioned in this document MAY be implemented. For clarification and consistency with <xref target="RFC4307"/> an algorithm will be set to MAY only when it has been downgraded.</t>
+
     </section>
     <section anchor="mustshouldmay" title="Conventions Used in This Document">
       <t> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", 
@@ -146,12 +150,12 @@
           <postamble> [1] - This requirement level is for 128-bit keys. 256-bit keys are at MAY. 192-bit keys can 
             safely be ignored.</postamble>
         </texttable>
-        <t> Explanation about AES-CBC is TBD.</t>
-        <t> Explanation about ChaCha20 is TBD.</t>
-        <t> Explanation about AES-GCM is TBD.</t>
-        <t> Explanation about AES-CCM is TBD.</t>
-        <t> Explanation about 3DES is TBD.</t>
-        <t> Explanation about DES is TBD.</t>
+        <t> ENCR_AES_CBC is raised from SHOULD+ in <xref target="RFC4307"/>. It is the only shared mandatory-to-implement algorithm with <xref target="RFC4307"/> and as a result is necessary for interoperability with IKEv2 implementation compatible with <xref target="RFC4307"/>. ENCR_AES_CBC MUST be implemented for both key length 128 and 256 bytes.</t>
+        <t> ENCR_CHACHA20_POLY1305 was not considered as mandatory-to-implement in <xref target="4307"/>. This document considers it SHOULD be implemented as it is next to be implemented for IPsec as an alternative to AES. At the time of writing this document, we are not aware of any IKEv2 implementing ENCR_CHACHA20_POLY1305 which refrains us from setting its status to SHOULD+.</t>
+        <t> AES-GCM with a 16 octet ICV was not considered as mandatory-to-implement in <xref target="4307"/>. This document considers it as mandatory to implement in an effort to provide AEAD. When implemented, AES_GCM MUST be implemented for both key length 128 and 256 bytes.</t>
+        <t> ENCR_AES_CCM_8 was not considered as mandatory-to-implement in <xref target="4307"/>. This document considers it SHOULD be implemented in order to be able to interact with IoT devices. As this case is not a general use case for VPNs, its status is expected to remain to SHOULD. The size of the ICV is expected to be sufficient for most use cases of IKEv2, as far less packets are exchanged on the IKE_SA compared to the IPsec SA. When implemented, ENCR_AES_CCM_8 MUST be implemented for both key length 128 and 256 bytes.</t>
+        <t> ENCR_3DES has been downgraded from <xref target="RFC4307"/> MUST-. ENCR_CHACHA20_POLY1305 provides a more efficient alternative to AES.[XXX I do not remember why it has been downgraded to MAY instead of SHOULD]</t>
+        <t> ENCR_DES is known to be insecure and so MUST NOT be implemented.</t>
       </section>
       <section anchor="algs_integ" title="IKEv2 Transform Type 3 Algorithms">
         <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. References 
@@ -165,10 +169,10 @@
           <c>AUTH_HMAC_SHA1_96</c><c>MUST-</c>
           <c>AUTH_AES_XCBC_96</c><c>MAY</c>
         </texttable>
-        <t> Explanation about SHA-256 is TBD.</t>
-        <t> Explanation about SHA-512 is TBD.</t>
-        <t> Explanation about SHA-1 is TBD.</t>
-        <t> Explanation about AES-XCBC is TBD.</t>
+        <t> AUTH_HMAC_SHA2_256_128 was not mentioned in <xref target="RFC4307"/>, as no SHA2 based authentication was mentioned. AUTH_HMAC_SHA2_256_128 MUST be implemented  in order to replace SHA1 and AUTH_HMAC_SHA1_96.</t>
+        <t> AUTH_HMAC_SHA2_512_256 SHOULD be implemented as as a future replacement of SHA2_128 or when stronger security is required. This value has been preferred to PRF_HMAC_SHA2_384, as the overhead of AUTH_HMAC_SHA2_512 is negligible.</t>
+        <t> AUTH_HMAC_SHA1_96 has been downgraded from MUST in <xref target="RFC4307"/>. There is a need to sunset SHA1 as collision are too affordable to consider SHA1 a safe hash function.</t>
+        <t> AUTH_AES-XCBC has been downgraded from SHOULD in <xref target="RFC4307"/>.[XXX Is that for performance issues?/not used? it turns out that we have not an MTI alternative to SHA1?].</t>
       </section>
       <section anchor="algs_prf" title="IKEv2 Transform Type 2 Algorithms">
         <t> Transform Type 2 Algorithms are pseudo-random functions used to generate random values when needed.</t>
@@ -198,10 +202,10 @@
           <c>2</c><c>1024-bit MODP Group</c><c>SHOULD NOT</c>
           <c>1</c><c>768-bit MODP Group</c><c>MUST NOT</c>
         </texttable>
-        <t> Explanation about Group 14 is TBD.</t>
-        <t> Explanation about Group 19 is TBD.</t>
-        <t> Explanation about Group 2 is TBD.</t>
-        <t> Explanation about Group 1 is TBD.</t>
+        <t> Group 14 or 2048-bit MODP Group is raised from SHOULD+ in <xref target="RFC4307"/> as a replacement for 1024-bit MODP Group.</t>
+        <t> Group 19 or 256-bit random ECP group was not specified in <xref target="RFC4307"/>.</t>
+        <t> Group 2 or 1024-bit MODP Group is downgrade from MUST- to SHOULD NOT. It was specified earlier, and now it is known to be weak at least for a nation state.</t>
+        <t> Group 1 or 768-bit MODP Group is known to be unsecured.</t>
       </section>
     </section>
 
