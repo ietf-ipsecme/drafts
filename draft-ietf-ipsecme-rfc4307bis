@@ -107,9 +107,23 @@
         (that are known today) in this document.  There is no guarantee that the algorithms we believe today may be 
         mandatory in the future will in fact become so.  All algorithms known today are subject to cryptographic attack 
         and may be broken in the future.</t>
-      <t>The recommendations of this document target IKEv2 implementers. In other words, the recommendations should not be considered for IKEv2 configuration, as a preference for some algorithms.</t>
-      <t>IKEv1 is out of scope of this document. IKEv1 is deprecated and the recommendations of this document MUST NOT be considered for IKEv1.</t>
-      <t>This document only provides recommendations for the mandatory-to-implement algorithms or algorithms too weak that are recommended not to be implemented. As a result, any algorithm not mentioned in this document MAY be implemented. For clarification and consistency with <xref target="RFC4307"/> an algorithm will be set to MAY only when it has been downgraded.</t>
+      <t>The recommendations of this document target IKEv2 implementers. In other words, the recommendations 
+      should not be considered for IKEv2 configuration, as a preference for some algorithms.</t>
+      <t>IKEv1 is out of scope of this document. IKEv1 is deprecated and the recommendations of this document 
+      must not be considered for IKEv1.</t>
+      <t>This document only provides recommendations for the mandatory-to-implement algorithms or algorithms
+      too weak that are recommended not to be implemented. As a result, any algorithm not mentioned in this 
+      document MAY be implemented. For clarification and consistency with <xref target="RFC4307"/> an algorithm
+      will be set to MAY only when it has been downgraded.</t>
+      <t>Although this document updates the algorithms in order to keep the IKEv2 communication secure over time,
+      it also aims at providing recommendations so that IKEv2 implementations remain interoperable. 
+      As a result, it is expected that deprecation of an algorithm is performed gradually, so to provide sufficient
+      time for various implementations to simultaneously update their algorithms while remaining interoperable. Unless
+      there are strong security reasons, an algorithm is expected to be downgraded from MUST to MUST- or SHOULD, 
+      instead of MUST NOT.    
+      Similarly, an algorithm that has not been mentioned as mandatory-to-implement is expected to be introduced 
+      with a SHOULD instead of a MUST.</t>          
+
 
     </section>
     <section anchor="mustshouldmay" title="Conventions Used in This Document">
@@ -159,8 +173,14 @@
         of writing this document, we are not aware of any IKEv2 implementing ENCR_CHACHA20_POLY1305 which refrains us
         from setting its status to SHOULD+.</t>
         <t> AES-GCM with a 16 octet ICV was not considered as mandatory-to-implement in RFC4307. At the time RFC4307
-        was written, AES-GCM was not defined in an IETF document. This document considers AES-GCM as mandatory 
-        to implement in an effort to provide AEAD. </t>
+        was written, AES-GCM was not defined in an IETF document. AES-GCM was defined for IPsec/ESP in 
+        <xref target="RFC4106"/> and later for IKEv2 in <xref target="RFC5282"/>. The main motivation for adopting
+        AES-GCM for IPSec/ESP is encryption performance as well as key longevity - compared to AES-CBC for example. 
+        This resulted in AES-GCM widely implemented for IPsec/ESP. As the load of IKEv2 is expected to remain 
+        relatively small, many IKEv2 have not implemented AES-GCM yet. In addition to its former MAY, this document
+        does not promote AES-GCM to a greater status than SHOULD so to preserve interoperability between IKEv2
+        implementations. This document considers AES-GCM as mandatory to implement in an effort to provide AEAD. 
+        Its status is expected to be raised once widely deployed. </t>
         <t> ENCR_AES_CCM_8 was not considered as mandatory-to-implement in RFC4307. This document considers it 
         SHOULD be implemented in order to be able to interact with Internet of Things devices. As this case is 
         not a general use case for VPNs, its status is expected to remain to SHOULD. The size of the ICV is 
@@ -191,7 +211,7 @@
         AUTH_HMAC_SHA2_512 is negligible.</t>
         <t> AUTH_HMAC_SHA1_96 has been downgraded from MUST in RFC4307. 
         There is an industry-wide trend to deprecate its usage.</t>
-        <t> AUTH_AES-XCBC has been downgraded from SHOULD in RFC4307 as it is not being deployed.</t>
+        <t> AUTH_AES-XCBC has been downgraded from SHOULD in RFC4307 as it is not widely deployed.</t>
       </section>
       <section anchor="algs_prf" title="IKEv2 Transform Type 2 Algorithms">
         <t> Transform Type 2 Algorithms are pseudo-random functions used to generate random values when needed.</t>
@@ -230,8 +250,8 @@
         <t> Group 19 or 256-bit random ECP group was not specified in RFC4307. 
         Group 19 is widely implemented and considered secure</t>
         <t> Group 2 or 1024-bit MODP Group is downgrade from MUST- to SHOULD NOT. 
-        It was specified earlier, and now it is known to be weak at least for 
-        a nation state, so its security margin is considered too narrow.</t>
+        It was specified earlier, and now it is known to be weak against a nation state attack,
+        so its security margin is considered too narrow.</t>
         <t> Group 1 or 768-bit MODP Group is known to be unsecured for several years.</t>
       </section>
     </section>
@@ -254,6 +274,7 @@
     <section anchor="ack" title="Acknowledgements">
       <t> The first version of this document was RFC 4307 by Jeffrey I. Schiller of the Massachusetts Institute of 
         Technology (MIT). Much of the original text has been copied verbatim.</t>
+      <t>We would like to thanks Paul Hoffman, Yaron Sheffer and Tommy Pauly for their valuable feed backs.</t>  
     </section>
   </middle>
   <!-- ====================================================================== -->
