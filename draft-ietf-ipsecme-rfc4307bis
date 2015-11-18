@@ -177,7 +177,7 @@
         <xref target="RFC4106"/> and later for IKEv2 in <xref target="RFC5282"/>. The main motivation for adopting
         AES-GCM for IPSec/ESP is encryption performance as well as key longevity - compared to AES-CBC for example. 
         This resulted in AES-GCM widely implemented for IPsec/ESP. As the load of IKEv2 is expected to remain 
-        relatively small, many IKEv2 have not implemented AES-GCM yet. In addition to its former MAY, this document
+        relatively small, many IKEv2 implementations do not include AES-GCM yet. In addition to its former MAY, this document
         does not promote AES-GCM to a greater status than SHOULD so to preserve interoperability between IKEv2
         implementations. This document considers AES-GCM as mandatory to implement in an effort to provide AEAD. 
         Its status is expected to be raised once widely deployed. </t>
