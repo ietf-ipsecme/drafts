@@ -144,7 +144,8 @@
       </texttable>
     </section>
     <section anchor="algs" title="Algorithm Selection">
-      <section anchor="algs_enc" title="IKEv2 Transform Type 1 Algorithms">
+    
+      <section anchor="algs_enc" title="Type 1 - IKEv2 Encryption Algorithm Transforms">
         <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. 
           References to the specifications defining these algorithms and the ones in the following subsections are in 
           the IANA registry <xref target="IKEV2-IANA"/>. Some of these algorithms are Authenticated Encryption with 
@@ -192,7 +193,36 @@
         efficient alternative to AES.</t>
         <t> ENCR_DES is known to be insecure and so MUST NOT be implemented.</t>
       </section>
-      <section anchor="algs_integ" title="IKEv2 Transform Type 3 Algorithms">
+      
+  
+      <section anchor="algs_prf" title="Type 2 - IKEv2 Pseudo-random Function Transforms">
+        <t> Transform Type 2 Algorithms are pseudo-random functions used to generate random values when needed.</t>
+        <texttable anchor="tbl_alg2" suppress-title="true">
+          <ttcol align="left">Name</ttcol>
+          <ttcol align="left">Status</ttcol>
+          <c>PRF_HMAC_SHA2_256</c><c>MUST</c>
+          <c>PRF_HMAC_SHA2_512</c><c>SHOULD+</c>
+          <c>PRF_HMAC_SHA1</c><c>MUST-</c>
+          <c>PRF_AES128_CBC</c><c>SHOULD</c>
+        </texttable>
+        <t> PRF_HMAC_SHA2_256 was not mentioned in RFC4307, as no SHA2 based authentication was mentioned.
+        PRF_HMAC_SHA2_256 MUST be implemented  in order to replace SHA1 and PRF_HMAC_SHA1.</t>
+        <t> PRF_HMAC_SHA2_512 SHOULD be implemented as as a future replacement of SHA2_256 or when stronger 
+        security is required. This value has been preferred to PRF_HMAC_SHA2_384, as the overhead of 
+        PRF_HMAC_SHA2_512 is negligible.</t>
+        <t> PRF_HMAC_SHA1_96 has been downgraded from MUST in RFC4307. 
+        There is an industry-wide trend to deprecate its usage.</t>
+        <t> PRF_AES128_CBC has been downgraded from SHOULD in RFC4307 as it is not being deployed. 
+        In order to provide compatibility between IKEv2 implementations, this document would not 
+        envision to downgrade any further to a MAY for example. On the other hand, this document 
+        considers new cases outside the VPN cases to keep it to a SHOULD status. This 
+        document considers it SHOULD be implemented
+        in order to be able to interact with Internet of Things devices. Internet of Things might use 
+        AES based pseudo-random function in order to avoid implementing SHA2, and use their implementation 
+        of AES. As this case is not a general use case for VPNs, its status is expected to remain a SHOULD.</t>
+      </section>
+
+      <section anchor="algs_integ" title="Type 3 - IKEv2 Integrity Algorithm Transforms">
         <t> The algorithms in the below table are negotiated in the SA payload and used in the ENCR payload. References 
           to the specifications defining these algorithms are in the IANA registry. When an AEAD algorithm (see <xref 
           target="algs_enc"/>) is used, no algorithm from this table needs to be used.</t>
@@ -202,7 +232,7 @@
           <c>AUTH_HMAC_SHA2_256_128</c><c>MUST</c>
           <c>AUTH_HMAC_SHA2_512_256</c><c>SHOULD+</c>
           <c>AUTH_HMAC_SHA1_96</c><c>MUST-</c>
-          <c>AUTH_AES_XCBC_96</c><c>MAY</c>
+          <c>AUTH_AES_XCBC_96</c><c>SHOULD</c>
         </texttable>
         <t> AUTH_HMAC_SHA2_256_128 was not mentioned in RFC4307, as no SHA2 based authentication was mentioned.
         AUTH_HMAC_SHA2_256_128 MUST be implemented  in order to replace SHA1 and AUTH_HMAC_SHA1_96.</t>
@@ -211,28 +241,13 @@
         AUTH_HMAC_SHA2_512 is negligible.</t>
         <t> AUTH_HMAC_SHA1_96 has been downgraded from MUST in RFC4307. 
         There is an industry-wide trend to deprecate its usage.</t>
-        <t> AUTH_AES-XCBC has been downgraded from SHOULD in RFC4307 as it is not widely deployed.</t>
+        <t> AUTH_AES-XCBC has been kept as SHOULD in RFC4307. This document considers it SHOULD be implemented
+        in order to be able to interact with Internet of Things devices. Internet of Things might use 
+        AES based pseudo-random function in order to avoid implementing SHA2, and use their implementation 
+        of AES. As this case is not a general use case for VPNs, its status is expected to remain a SHOULD.</t>
       </section>
-      <section anchor="algs_prf" title="IKEv2 Transform Type 2 Algorithms">
-        <t> Transform Type 2 Algorithms are pseudo-random functions used to generate random values when needed.</t>
-        <texttable anchor="tbl_alg2" suppress-title="true">
-          <ttcol align="left">Name</ttcol>
-          <ttcol align="left">Status</ttcol>
-          <c>PRF_HMAC_SHA2_256</c><c>MUST</c>
-          <c>PRF_HMAC_SHA2_512</c><c>SHOULD+</c>
-          <c>PRF_HMAC_SHA1</c><c>MUST-</c>
-          <c>PRF_AES128_CBC</c><c>MAY</c>
-        </texttable>
-        <t> PRF_HMAC_SHA2_256 was not mentioned in RFC4307, as no SHA2 based authentication was mentioned.
-        PRF_HMAC_SHA2_256 MUST be implemented  in order to replace SHA1 and PRF_HMAC_SHA1.</t>
-        <t> PRF_HMAC_SHA2_512 SHOULD be implemented as as a future replacement of SHA2_256 or when stronger 
-        security is required. This value has been preferred to PRF_HMAC_SHA2_384, as the overhead of 
-        PRF_HMAC_SHA2_512 is negligible.</t>
-        <t> PRF_HMAC_SHA1_96 has been downgraded from MUST in RFC4307. 
-        There is an industry-wide trend to deprecate its usage.</t>
-        <t> PRF_AES128_CBC has been downgraded from SHOULD in RFC4307 as it is not being deployed.</t>
-      </section>
-      <section anchor="algs_dh" title="Diffie-Hellman Groups">
+    
+      <section anchor="algs_dh" title="Type 4 - IKEv2 Diffie-Hellman Group Transforms">
         <t> There are several Modular Exponential (MODP) groups and several Elliptic Curve groups (ECC) that are 
           defined for use in IKEv2.  They are defined in both the [IKEv2] base document and in extensions documents. 
           They are identified by group number.</t>
