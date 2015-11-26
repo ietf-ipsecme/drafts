@@ -3,6 +3,8 @@
 
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
 <!ENTITY rfc2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY rfc4106 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.4106.xml">
+<!ENTITY rfc4307 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.4307.xml">
 <!ENTITY rfc7296 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7296.xml">
 <!ENTITY rfc5282 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.5282.xml">
 ]>
@@ -117,12 +119,21 @@
       will be set to MAY only when it has been downgraded.</t>
       <t>Although this document updates the algorithms in order to keep the IKEv2 communication secure over time,
       it also aims at providing recommendations so that IKEv2 implementations remain interoperable. 
-      As a result, it is expected that deprecation of an algorithm is performed gradually, so to provide sufficient
+      IKEv2 interoperability is addressed by an incremental introduction or deprecation of algorithms. 
+      In addition, this document also considers the new use cases for IKEv2 deployment, such as Internet of Things (IoT).</t>
+      
+      <t>It is expected that deprecation of an algorithm is performed gradually, so to provide sufficient
       time for various implementations to simultaneously update their algorithms while remaining interoperable. Unless
       there are strong security reasons, an algorithm is expected to be downgraded from MUST to MUST- or SHOULD, 
       instead of MUST NOT.    
       Similarly, an algorithm that has not been mentioned as mandatory-to-implement is expected to be introduced 
-      with a SHOULD instead of a MUST.</t>          
+      with a SHOULD instead of a MUST.</t>
+      
+      <t>If IKEv2 has been until now mostly used for VPNs, the current trend toward Internet of Things and its
+      adoption of IKEv2 brought us to consider this specific use case. IoT devices are resource 
+      constrainted devices and their choice of algorithms are motivated by minimizing 
+      the fooprint of the code, the computation or the size of the messages to send. This document indicates 
+      IoT when the specified algorithm is especially targeted for IoT devices.</t>  
 
 
     </section>
@@ -141,6 +152,7 @@
           longer be a MUST in a future document.  Although its status will be determined at a later time, it is 
           reasonable to expect that if a future revision of a document alters the status of a MUST- algorithm, it will 
           remain at least a SHOULD or a SHOULD-.</c>
+        <c>IoT</c><c>stands for Internet of Things.</c>
       </texttable>
     </section>
     <section anchor="algs" title="Algorithm Selection">
@@ -159,11 +171,14 @@
           <c>ENCR_AES_CBC</c><c>MUST</c><c>No</c><c>[1]</c>
           <c>ENCR_CHACHA20_POLY1305</c><c>SHOULD</c><c>Yes</c><c/>
           <c>AES-GCM with a 16 octet ICV</c><c>SHOULD</c><c>Yes</c><c>[1]</c>
-          <c>ENCR_AES_CCM_8</c><c>SHOULD</c><c>Yes</c><c>[1]</c>	
+          <c>ENCR_AES_CCM_8</c><c>SHOULD</c><c>Yes</c><c>[1][IoT]</c>	
           <c>ENCR_3DES</c><c>MAY</c><c>No</c><c/>
           <c>ENCR_DES</c><c>MUST NOT</c><c>No</c><c/>
-          <postamble> [1] - This requirement level is for 128-bit keys. 256-bit keys are at MAY. 192-bit keys can 
-            safely be ignored.</postamble>
+          <postamble>
+          [1] - This requirement level is for 128-bit keys. 256-bit keys are at MAY. 192-bit keys can 
+            safely be ignored.
+          [IoT] - This requirement is for interoperability with IoT.           
+            </postamble>
         </texttable>
         <t> ENCR_AES_CBC is raised from SHOULD+ in RFC4307. It is the only shared mandatory-to-implement algorithm 
         with RFC4307 and as a result is necessary for interoperability with IKEv2 implementation compatible with
@@ -200,10 +215,14 @@
         <texttable anchor="tbl_alg2" suppress-title="true">
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
-          <c>PRF_HMAC_SHA2_256</c><c>MUST</c>
-          <c>PRF_HMAC_SHA2_512</c><c>SHOULD+</c>
-          <c>PRF_HMAC_SHA1</c><c>MUST-</c>
-          <c>PRF_AES128_CBC</c><c>SHOULD</c>
+          <ttcol align="left">Comment</ttcol>
+          <c>PRF_HMAC_SHA2_256</c><c>MUST</c><c></c>
+          <c>PRF_HMAC_SHA2_512</c><c>SHOULD+</c><c></c>
+          <c>PRF_HMAC_SHA1</c><c>MUST-</c><c></c>
+          <c>PRF_AES128_CBC</c><c>SHOULD</c><c>[IoT]</c>
+          <postamble> 
+          [IoT] - This requirement is for interoperability with IoT 
+            </postamble>
         </texttable>
         <t> PRF_HMAC_SHA2_256 was not mentioned in RFC4307, as no SHA2 based authentication was mentioned.
         PRF_HMAC_SHA2_256 MUST be implemented  in order to replace SHA1 and PRF_HMAC_SHA1.</t>
@@ -229,10 +248,14 @@
         <texttable anchor="tbl_alg3" suppress-title="true">
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
-          <c>AUTH_HMAC_SHA2_256_128</c><c>MUST</c>
-          <c>AUTH_HMAC_SHA2_512_256</c><c>SHOULD+</c>
-          <c>AUTH_HMAC_SHA1_96</c><c>MUST-</c>
-          <c>AUTH_AES_XCBC_96</c><c>SHOULD</c>
+          <ttcol align="left">Comment</ttcol>
+          <c>AUTH_HMAC_SHA2_256_128</c><c>MUST</c><c></c>
+          <c>AUTH_HMAC_SHA2_512_256</c><c>SHOULD+</c><c></c>
+          <c>AUTH_HMAC_SHA1_96</c><c>MUST-</c><c></c>
+          <c>AUTH_AES_XCBC_96</c><c>SHOULD</c><c>[IoT]</c>
+          <postamble> 
+          [IoT] - This requirement is for interoperability with IoT 
+            </postamble>
         </texttable>
         <t> AUTH_HMAC_SHA2_256_128 was not mentioned in RFC4307, as no SHA2 based authentication was mentioned.
         AUTH_HMAC_SHA2_256_128 MUST be implemented  in order to replace SHA1 and AUTH_HMAC_SHA1_96.</t>
@@ -296,6 +319,8 @@
   <back>
     <references title="Normative References"> 
       &rfc2119;
+      &rfc4106;
+      &rfc4307;
       &rfc7296;
       &rfc5282;
     </references>
