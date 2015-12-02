@@ -98,7 +98,7 @@
         IKE itself uses such algorithms as part of its own negotiations.  This requires that some set of algorithms be 
         specified as "mandatory-to-implement" for IKE.</t>
         
-     <section title="Updating Mandatory to Implement Algorythms">   
+     <section title="Updating Mandatory to Implement Algorithms">   
       <t> The nature of cryptography is that new algorithms surface continuously and existing algorithms are 
         continuously attacked.  An algorithm believed to be strong today may be demonstrated to be weak tomorrow.  
         Given this, the choice of mandatory-to-implement algorithm should be conservative so as to minimize the 
