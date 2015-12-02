@@ -110,7 +110,7 @@
         document should need to be updated.</t>
      </section>
      
-     <section title="Algorithm Status Update Policy">
+     <section title="Updating Algorithm Requirement Levels">
       <t> Ideally, the mandatory-to-implement algorithm of tomorrow should already be available in most implementations 
         of IPsec by the time it is made mandatory.  To facilitate this, we will attempt to identify those algorithms 
         (that are known today) in this document.  There is no guarantee that the algorithms we believe today may be 
@@ -140,7 +140,7 @@
       IoT when the specified algorithm is especially targeted for IoT devices.</t>  
      </section>
 
-     <section title="Audience of the Document">
+     <section title="Document Audience">
       <t>The recommendations of this document target IKEv2 implementers. In other words, the recommendations 
       should not be considered for IKEv2 configuration, as a preference for some algorithms.</t>
       <t>IKEv1 is out of scope of this document. IKEv1 is deprecated and the recommendations of this document 
