@@ -89,12 +89,16 @@
   <middle>
     <!-- ====================================================================== -->
     <section anchor="introduction" title="Introduction">
+    
+     
       <t> The Internet Key Exchange protocol <xref target="RFC7296" /> provides for the negotiation of cryptographic 
         algorithms between both endpoints of a cryptographic association.  Different implementations of IPsec and IKE 
         may provide different algorithms.  However, the IETF desires that all implementations should have some way to 
         interoperate.  In particular, this requires that IKE define a set of mandatory-to-implement algorithms because 
         IKE itself uses such algorithms as part of its own negotiations.  This requires that some set of algorithms be 
         specified as "mandatory-to-implement" for IKE.</t>
+        
+     <section title="Updating Mandatory to Implement Algorythms">   
       <t> The nature of cryptography is that new algorithms surface continuously and existing algorithms are 
         continuously attacked.  An algorithm believed to be strong today may be demonstrated to be weak tomorrow.  
         Given this, the choice of mandatory-to-implement algorithm should be conservative so as to minimize the 
@@ -104,15 +108,15 @@
         adapt to the changing world.  For this reason, the selection of mandatory-to-implement algorithms was removed 
         from the main IKEv2 specification and placed in this document.  As the choice of algorithm changes, only this 
         document should need to be updated.</t>
+     </section>
+     
+     <section title="Algorithm Status Update Policy">
       <t> Ideally, the mandatory-to-implement algorithm of tomorrow should already be available in most implementations 
         of IPsec by the time it is made mandatory.  To facilitate this, we will attempt to identify those algorithms 
         (that are known today) in this document.  There is no guarantee that the algorithms we believe today may be 
         mandatory in the future will in fact become so.  All algorithms known today are subject to cryptographic attack 
         and may be broken in the future.</t>
-      <t>The recommendations of this document target IKEv2 implementers. In other words, the recommendations 
-      should not be considered for IKEv2 configuration, as a preference for some algorithms.</t>
-      <t>IKEv1 is out of scope of this document. IKEv1 is deprecated and the recommendations of this document 
-      must not be considered for IKEv1.</t>
+
       <t>This document only provides recommendations for the mandatory-to-implement algorithms or algorithms
       too weak that are recommended not to be implemented. As a result, any algorithm not mentioned in this 
       document MAY be implemented. For clarification and consistency with <xref target="RFC4307"/> an algorithm
@@ -134,7 +138,14 @@
       constrainted devices and their choice of algorithms are motivated by minimizing 
       the fooprint of the code, the computation or the size of the messages to send. This document indicates 
       IoT when the specified algorithm is especially targeted for IoT devices.</t>  
+     </section>
 
+     <section title="Audience of the Document">
+      <t>The recommendations of this document target IKEv2 implementers. In other words, the recommendations 
+      should not be considered for IKEv2 configuration, as a preference for some algorithms.</t>
+      <t>IKEv1 is out of scope of this document. IKEv1 is deprecated and the recommendations of this document 
+      must not be considered for IKEv1.</t>
+     </section>
 
     </section>
     <section anchor="mustshouldmay" title="Conventions Used in This Document">
