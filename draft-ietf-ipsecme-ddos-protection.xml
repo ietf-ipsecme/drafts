@@ -53,7 +53,9 @@
     <workgroup>IPSecME Working Group</workgroup>
     <keyword>Internet-Draft</keyword>
     <abstract>
-      <t> This document recommends implementation and configuration best practices for Internet-connected IPsec responders, to allow them to resist Denial of Service and Distributed Denial of Service attacks. Additionally, the document introduces a new mechanism called "Client Puzzles" that help accomplish this task.</t>
+      <t> This document recommends implementation and configuration best practices for Internet-connected IPsec responders, to allow 
+        them to resist Denial of Service and Distributed Denial of Service attacks. Additionally, the document introduces a new 
+        mechanism called "Client Puzzles" that help accomplish this task.</t>
     </abstract>
   </front>
   <middle>
@@ -71,12 +73,28 @@
         which are more difficult to defend against. This document presents recommendations how responder can thwart
         (D)DoS attacks. It also introduces a new mechanism, "puzzles", that can be used to accopmlish this task.
         </t>
-      <t> The IKE_SA_INIT Exchange described in Section 1.2 of <xref target="RFC7296"/> involves the initiator sending a single message. The responder replies with a single message and also allocates memory for a structure called a half-open IKE Security Association (SA). This half-open SA is later authenticated in the IKE_AUTH Exchange. If that IKE_AUTH request never comes, the half-open SA is kept for an unspecified amount of time. Depending on the algorithms used and implementation, such a half-open SA will use from around 100 bytes to several thousands bytes of memory.</t> 
-      <t> This creates an easy attack vector against an IKE responder. Generating the IKE_SA_INITl request is cheap, and sending multiple such requests can either cause the responder to allocate too much resources and fail, or else if resource allocation is somehow throttled, legitimate initiators would also be prevented from setting up IKE SAs.</t>
-      <t> An obvious defense, which is described in <xref target="ratelimit"/>, is limiting the number of half-open SAs opened by a single peer. However, since all that is required is a single packet, an attacker can use multiple spoofed source IP addresses.</t>
-      <t> Section 2.6 of <xref target="RFC7296"/> offers a mechanism to mitigate this DoS attack: the stateless cookie. When the server is under load, the responder responds to the IKE_SA_INIT request with a calculated "stateless cookie" - a value that can be re-calculated based on values in the IKE_SA_INIT request without storing responder-side state. The initiator is expected to repeat the IKE_SA_INIT request, this time including the stateless cookie.</t>
-      <t> Attackers that have multiple source IP addresses with return routability, such as in the case of bot-nets, can fill up a half-open SA table anyway. The cookie mechanism limits the amount of allocated state to the size of the bot-net, multiplied by the number of half-open SAs allowed per peer address, multiplied by the amount of state allocated for each half-open SA. With typical values this can easily reach hundreds of megabytes.</t>
-      <t> The mechanism described in <xref target="puzzles"/> adds a proof of work for the initiator by calculating a pre-image for a partial hash value. This sets an upper bound, determined by the attacker's CPU, to the number of negotiations it can initiate in a unit of time.</t>
+      <t> The IKE_SA_INIT Exchange described in Section 1.2 of <xref target="RFC7296"/> involves the initiator sending a single message. 
+        The responder replies with a single message and also allocates memory for a structure called a half-open IKE Security 
+        Association (SA). This half-open SA is later authenticated in the IKE_AUTH Exchange. If that IKE_AUTH request never comes, 
+        the half-open SA is kept for an unspecified amount of time. Depending on the algorithms used and implementation, such a 
+        half-open SA will use from around 100 bytes to several thousands bytes of memory.</t> 
+      <t> This creates an easy attack vector against an IKE responder. Generating the IKE_SA_INITl request is cheap, and sending 
+        multiple such requests can either cause the responder to allocate too much resources and fail, or else if resource allocation 
+        is somehow throttled, legitimate initiators would also be prevented from setting up IKE SAs.</t>
+      <t> An obvious defense, which is described in <xref target="ratelimit"/>, is limiting the number of half-open SAs opened by a 
+        single peer. However, since all that is required is a single packet, an attacker can use multiple spoofed source IP 
+        addresses.</t>
+      <t> Section 2.6 of <xref target="RFC7296"/> offers a mechanism to mitigate this DoS attack: the stateless cookie. When the server 
+        is under load, the responder responds to the IKE_SA_INIT request with a calculated "stateless cookie" - a value that can be 
+        re-calculated based on values in the IKE_SA_INIT request without storing responder-side state. The initiator is expected to 
+        repeat the IKE_SA_INIT request, this time including the stateless cookie.</t>
+      <t> Attackers that have multiple source IP addresses with return routability, such as in the case of bot-nets, can fill up a 
+        half-open SA table anyway. The cookie mechanism limits the amount of allocated state to the size of the bot-net, multiplied by 
+        the number of half-open SAs allowed per peer address, multiplied by the amount of state allocated for each half-open SA. With 
+        typical values this can easily reach hundreds of megabytes.</t>
+      <t> The mechanism described in <xref target="puzzles"/> adds a proof of work for the initiator by calculating a pre-image for a 
+        partial hash value. This sets an upper bound, determined by the attacker's CPU, to the number of negotiations it can initiate 
+        in a unit of time.</t>
       <section anchor="mustshouldmay" title="Conventions Used in This Document">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT",
           "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described
@@ -94,18 +112,40 @@
           <t> Decrypts the request.</t></list></t>
         <t> If the IKE_AUTH request decrypts properly:<list style="symbols">
           <t> Validates the certificate chain (if present) in the auth request.</t></list></t></list></t>
-      <t> Yes, there's a stage 4 where the responder actually creates Child SAs, but when talking about (D)DoS, we never get to this stage.</t>
-      <t> Stage #1 is pretty light on CPU power, but requires some storage, and it's very light for the initiator as well. Stage #2 includes private-key operations, so it's much heavier CPU-wise, but it releases the storage allocated in stage #1. Stage #3 includes a public key operation, and possibly many of them.</t>
-      <t> To attack such a server, an attacker can attempt to either exhaust memory or to exhaust CPU. Without any protection, the most efficient attack is to send multiple IKE_SA_INIT requests and exhaust memory. This should be easy because those requests are cheap.</t>
-      <t> There are obvious ways for the responder to protect itself even without changes to the protocol. It can reduce the time that an entry remains in the half-open SA database, and it can limit the amount of concurrent half-open SAs from a particular address or prefix. The attacker can overcome this by using spoofed source addresses.</t>
-      <t> The stateless cookie mechanism from Section 2.6 of <xref target="RFC7296"/> prevents an attack with spoofed source addresses. This doesn't solve the issue, but it makes the limiting of half-open SAs by address or prefix work. Puzzles do the same thing only more of it. They make it harder for an attacker to reach the goal of getting a half-open SA. They don't have to be so hard that an attacker can't afford to solve them; it's enough that they increase the cost of a half-open SAs for the attacker.</t>
-      <t> Reducing the amount of time an abandoned half-open SA is kept attacks the issue from the other side. It reduces the value the attacker gets from managing to create a half-open SA. For example, if a half-open SA is kept for 1 minute and the capacity is 60,000 half-open SAs, an attacker would need to create 1,000 half-open SAs per second. Reduce the retention time to 3 seconds, and the attacker needs to create 20,000 half-open SAs per second. By introducing a puzzle, each half-open SA becomes more expensive for an attacker, making it more likely to thwart an exhaustion attack against responder memory.</t>
-      <t> At this point, filling up the half-open SA database is no longer the most efficient DoS attack. The attacker has two ways to do better:<list style="numbers">
+      <t> Yes, there's a stage 4 where the responder actually creates Child SAs, but when talking about (D)DoS, we never get to this 
+        stage.</t>
+      <t> Stage #1 is pretty light on CPU power, but requires some storage, and it's very light for the initiator as well. Stage #2 
+        includes private-key operations, so it's much heavier CPU-wise, but it releases the storage allocated in stage #1. Stage #3 
+        includes a public key operation, and possibly many of them.</t>
+      <t> To attack such a server, an attacker can attempt to either exhaust memory or to exhaust CPU. Without any protection, the 
+        most efficient attack is to send multiple IKE_SA_INIT requests and exhaust memory. This should be easy because those requests 
+        are cheap.</t>
+      <t> There are obvious ways for the responder to protect itself even without changes to the protocol. It can reduce the time that 
+        an entry remains in the half-open SA database, and it can limit the amount of concurrent half-open SAs from a particular 
+        address or prefix. The attacker can overcome this by using spoofed source addresses.</t>
+      <t> The stateless cookie mechanism from Section 2.6 of <xref target="RFC7296"/> prevents an attack with spoofed source 
+        addresses. This doesn't solve the issue, but it makes the limiting of half-open SAs by address or prefix work. Puzzles do 
+        the same thing only more of it. They make it harder for an attacker to reach the goal of getting a half-open SA. They don't 
+        have to be so hard that an attacker can't afford to solve them; it's enough that they increase the cost of a half-open SAs 
+        for the attacker.</t>
+      <t> Reducing the amount of time an abandoned half-open SA is kept attacks the issue from the other side. It reduces the value 
+        the attacker gets from managing to create a half-open SA. For example, if a half-open SA is kept for 1 minute and the capacity 
+        is 60,000 half-open SAs, an attacker would need to create 1,000 half-open SAs per second. Reduce the retention time to 3 
+        seconds, and the attacker needs to create 20,000 half-open SAs per second. By introducing a puzzle, each half-open SA becomes 
+        more expensive for an attacker, making it more likely to thwart an exhaustion attack against responder memory.</t>
+      <t> At this point, filling up the half-open SA database is no longer the most efficient DoS attack. The attacker has two ways to 
+        do better:<list style="numbers">
         <t> Go back to spoofed addresses and try to overwhelm the CPU that deals with generating cookies, or</t>
         <t> Take the attack to the next level by also sending an IKE_AUTH request.</t></list></t>
-      <t> It seems that the first thing cannot be dealt with at the IKE level. It's probably better left to Intrusion Prevention System (IPS) technology.</t>
-      <t> On the other hand sending an IKE_AUTH request is surprisingly cheap. It requires a proper IKE header with the correct IKE SPIs, and it requires a single Encrypted payload. The content of the payload might as well be junk. The responder has to perform the relatively expensive key derivation, only to find that the IKE_AUTH request does not decrypt. Depending on the responder implementation, this can be repeated with the same half-open SA (if the responder does not delete the half-open SA following an unsuccessful decryption - see discussion in <xref target="timelimit" />).</t>
-      <t> Here too, the number of half-open SAs that the attacker can achieve is crucial, because each one allows the attacker to waste some CPU time. So making it hard to make many half-open SAs is important.</t>
+      <t> It seems that the first thing cannot be dealt with at the IKE level. It's probably better left to Intrusion Prevention 
+        System (IPS) technology.</t>
+      <t> On the other hand sending an IKE_AUTH request is surprisingly cheap. It requires a proper IKE header with the correct IKE 
+        SPIs, and it requires a single Encrypted payload. The content of the payload might as well be junk. The responder has to 
+        perform the relatively expensive key derivation, only to find that the IKE_AUTH request does not decrypt. Depending on the 
+        responder implementation, this can be repeated with the same half-open SA (if the responder does not delete the half-open 
+        SA following an unsuccessful decryption - see discussion in <xref target="timelimit" />).</t>
+      <t> Here too, the number of half-open SAs that the attacker can achieve is crucial, because each one allows the attacker to 
+        waste some CPU time. So making it hard to make many half-open SAs is important.</t>
       <t> A strategy against DDoS has to rely on at least 4 components:<list style="numbers">
         <t> Hardening the half-open SA database by reducing retention time.</t>
         <t> Hardening the half-open SA database by rate-limiting single IPs/prefixes.</t>
@@ -114,21 +154,39 @@
       <t>Puzzles have their place as part of #4.</t>
     </section>
     <section anchor="puzzles" title="Puzzles">
-      <t> The puzzle introduced here extends the cookie mechanism from <xref target="RFC7296"/>. It is loosely based on the proof-of-work technique used in BitCoins <xref target="bitcoins" />.</t>
+      <t> The puzzle introduced here extends the cookie mechanism from <xref target="RFC7296"/>. It is loosely based on the 
+        proof-of-work technique used in BitCoins <xref target="bitcoins" />.</t>
       <t> A puzzle is sent to the initiator in two cases:<list style="symbols">
         <t> The responder is so overloaded, than no half-open SAs are allowed to be created without the puzzle, or</t>
         <!-- David Waltermire: The sentence containing the following text is difficult to parse. Consider rewording. -->
-        <t> The responder is not too loaded, but the rate-limiting method described in <xref target="ratelimit" /> prevents half-open SAs from being created with this particular peer address or prefix without first solving a puzzle.</t></list></t>
-      <t> When the responder decides to send the challenge notification in response to a IKE_SA_INIT request, the notification includes three fields:<list style="numbers">
-        <t> Cookie - this is calculated the same as in <xref target="RFC7296"/>, i.e. the process of generating the cookie is not specified.</t>
-        <t> Algorithm, this is the identifier of a Pseudo-Random Function (PRF) algorithm, one of those proposed by the initiator in the SA payload.</t>
-        <t> Zero Bit Count. This is a number between 8 and 255 (or a special value - 0, see <xref target="diflevelinit" />) that represents the length of the zero-bit run at the end of the output of the PRF function calculated over the cookie that the initiator is to send. The values 1-8 are explicitly excluded, because they create a puzzle that is too easy to solve for it to make any difference in mitigating DDoS attacks. Since the mechanism is supposed to be stateless for the responder, either the value of zero bit count is global or it is somehow encoded in the cookie. If it is global then it means that this value is the same for all the initiators who are receiving puzzles at any given point of time. The responder, however, may change this value over time depending on its load.</t></list></t>
-      <t> Upon receiving this challenge, the initiator attempts to calculate the PRF using different keys. When a key is found such that the resulting PRF output has a sufficient number of trailing zero bits, that result is sent to the responder.</t>
+        <t> The responder is not too loaded, but the rate-limiting method described in <xref target="ratelimit" /> prevents half-open 
+          SAs from being created with this particular peer address or prefix without first solving a puzzle.</t></list></t>
+      <t> When the responder decides to send the challenge notification in response to a IKE_SA_INIT request, the notification 
+        includes three fields:<list style="numbers">
+        <t> Cookie - this is calculated the same as in <xref target="RFC7296"/>, i.e. the process of generating the cookie is not 
+          specified.</t>
+        <t> Algorithm, this is the identifier of a Pseudo-Random Function (PRF) algorithm, one of those proposed by the initiator in 
+          the SA payload.</t>
+        <t> Zero Bit Count. This is a number between 8 and 255 (or a special value - 0, see <xref target="diflevelinit" />) that 
+          represents the length of the zero-bit run at the end of the output of the PRF function calculated over the cookie that the 
+          initiator is to send. The values 1-8 are explicitly excluded, because they create a puzzle that is too easy to solve for it 
+          to make any difference in mitigating DDoS attacks. Since the mechanism is supposed to be stateless for the responder, 
+          either the value of zero bit count is global or it is somehow encoded in the cookie. If it is global then it means that 
+          this value is the same for all the initiators who are receiving puzzles at any given point of time. The responder, however, 
+          may change this value over time depending on its load.</t></list></t>
+      <t> Upon receiving this challenge, the initiator attempts to calculate the PRF using different keys. When a key is found such 
+        that the resulting PRF output has a sufficient number of trailing zero bits, that result is sent to the responder.</t>
       <t> When receiving a request with a solved puzzle, the responder verifies two things:<list style="symbols">
         <t> That the cookie part is indeed valid.</t>
-        <t> That the PRF of the transmitted cookie calculated with the transmitted key has a sufficient number of trailing zero bits.</t></list></t>
-      <t> Example 1: Suppose the calculated cookie is fdbcfa5a430d7201282358a2a034de0013cfe2ae (20 octets), the algorithm is HMAC-SHA256, and the required number of zero bits is 18. After successively trying a bunch of keys, the initiator finds that the key that is all-zero except for the last three bytes which are 02fc95 yields HMAC_SHA256(k, cookie) = 843ab73f35c5b431b1d8f80bedcd1cb9ef46832f799c1d4250a49f683c580000, which has 19 trailing zero bits, so it is an acceptable solution.</t>
-      <t> Example 2: Same cookie, but this time the required number of zero bits is 22. The first key to satisfy that requirement ends in 960cbb, which yields a hash with 23 trailing zero bits. Finding this requires 9,833,659 invocations of the PRF.</t>
+        <t> That the PRF of the transmitted cookie calculated with the transmitted key has a sufficient number of trailing zero 
+          bits.</t></list></t>
+      <t> Example 1: Suppose the calculated cookie is fdbcfa5a430d7201282358a2a034de0013cfe2ae (20 octets), the algorithm is 
+        HMAC-SHA256, and the required number of zero bits is 18. After successively trying a bunch of keys, the initiator finds that 
+        the key that is all-zero except for the last three bytes which are 02fc95 yields HMAC_SHA256(k, cookie) = 
+        843ab73f35c5b431b1d8f80bedcd1cb9ef46832f799c1d4250a49f683c580000, which has 19 trailing zero bits, so it is an acceptable 
+        solution.</t>
+      <t> Example 2: Same cookie, but this time the required number of zero bits is 22. The first key to satisfy that requirement 
+        ends in 960cbb, which yields a hash with 23 trailing zero bits. Finding this requires 9,833,659 invocations of the PRF.</t>
       <texttable anchor="tbl1" title="The time needed to solve a puzzle of various difficulty for the cookie = fdbcfa5a430d7201282358a2a034de0013cfe2ae">
         <ttcol align="center">Key</ttcol>
         <ttcol align="left">Last 24 Hex PRF Digits</ttcol>
@@ -150,37 +208,99 @@
 <c>37dc96e4</c><c>1e24babc92234aa3a0000000</c><c>29</c><c>1237.170</c>
 <c>7a1a56d8</c><c>c98f0061e380a49e00000000</c><c>33</c><c>2726.150</c>
       </texttable>
-      <t> The figures above were obtained on a 2.4 GHz single core i5. Run times can be halved or quartered with multi-core code, but would be longer on mobile phone processors, even if those are multi-core as well. With these figures 20 bits is believed to be a reasonable choice for puzzle level difficulty for all initiators, with 24 bits acceptable for specific hosts/prefixes.</t>
+      <t> The figures above were obtained on a 2.4 GHz single core i5. Run times can be halved or quartered with multi-core code, but 
+        would be longer on mobile phone processors, even if those are multi-core as well. With these figures 20 bits is believed to 
+        be a reasonable choice for puzzle level difficulty for all initiators, with 24 bits acceptable for specific hosts/prefixes.</t>
     </section>
     <section anchor="timelimit" title="Retention Periods for Half-Open SAs">
-      <t> As a UDP-based protocol, IKEv2 has to deal with packet loss through retransmissions. Section 2.4 of <xref target="RFC7296"/> recommends "that messages be retransmitted at least a dozen times over a period of at least several minutes before giving up". Retransmission policies in practice wait at least one or two seconds before retransmitting for the first time.</t>
-      <t> Because of this, setting the timeout on a half-open SA too low will cause it to expire whenever even one IKE_AUTH request packet is lost. When not under attack, the half-open SA timeout SHOULD be set high enough that the initiator will have enough time to send multiple retransmissions, minimizing the chance of transient network congestion causing IKE failure.</t>
-      <t> When the system is under attack, as measured by the amount of half-open SAs, it makes sense to reduce this lifetime. The responder should still allow enough time for the round-trip, enough time for the initiator to derive the D-H shared value, and enough time to derive the IKE SA keys and the create the IKE_AUTH request. Two seconds is probably as low a value as can realistically be used.</t>
-      <t> It could make sense to assign a shorter value to half-open SAs originating from IP addresses or prefixes that are considered suspect because of multiple concurrent half-open SAs.</t>
+      <t> As a UDP-based protocol, IKEv2 has to deal with packet loss through retransmissions. Section 2.4 of <xref target="RFC7296"/> 
+        recommends "that messages be retransmitted at least a dozen times over a period of at least several minutes before giving up". 
+        Retransmission policies in practice wait at least one or two seconds before retransmitting for the first time.</t>
+      <t> Because of this, setting the timeout on a half-open SA too low will cause it to expire whenever even one IKE_AUTH request 
+        packet is lost. When not under attack, the half-open SA timeout SHOULD be set high enough that the initiator will have 
+        enough time to send multiple retransmissions, minimizing the chance of transient network congestion causing IKE failure.</t>
+      <t> When the system is under attack, as measured by the amount of half-open SAs, it makes sense to reduce this lifetime. The 
+        responder should still allow enough time for the round-trip, enough time for the initiator to derive the D-H shared value, 
+        and enough time to derive the IKE SA keys and the create the IKE_AUTH request. Two seconds is probably as low a value as 
+        can realistically be used.</t>
+      <t> It could make sense to assign a shorter value to half-open SAs originating from IP addresses or prefixes that are 
+        considered suspect because of multiple concurrent half-open SAs.</t>
     </section>
     <section anchor="ratelimit" title="Rate Limiting">
-      <t> Even with DDoS, the attacker has only a limited amount of nodes participating in the attack. By limiting the amount of half-open SAs that are allowed to exist concurrently with each such node, the total amount of half-open SAs is capped, as is the total amount of key derivations that the responder is forced to complete.</t>
-      <t> In IPv4 it makes sense to limit the number of half-open SAs based on IP address. Most IPv4 nodes are either directly attached to the Internet using a routable address or are hidden behind a NAT device with a single IPv4 external address. IPv6 networks are currently a rarity, so we can only speculate on what their wide deployment will be like, but the current thinking is that ISP customers will be assigned whole subnets, so we don't expect the kind of NAT deployment that is common in IPv4. For this reason it makes sense to use a 64-bit prefix as the basis for rate limiting in IPv6.</t>
-      <t> The number of half-open SAs is easy to measure, but it is also worthwhile to measure the number of failed IKE_AUTH exchanges. If possible, both factors should be taken into account when deciding which IP address or prefix is considered suspicious.</t>
+      <t> Even with DDoS, the attacker has only a limited amount of nodes participating in the attack. By limiting the amount of 
+        half-open SAs that are allowed to exist concurrently with each such node, the total amount of half-open SAs is capped, as 
+        is the total amount of key derivations that the responder is forced to complete.</t>
+      <t> In IPv4 it makes sense to limit the number of half-open SAs based on IP address. Most IPv4 nodes are either directly 
+        attached to the Internet using a routable address or are hidden behind a NAT device with a single IPv4 external address. 
+        IPv6 networks are currently a rarity, so we can only speculate on what their wide deployment will be like, but the current 
+        thinking is that ISP customers will be assigned whole subnets, so we don't expect the kind of NAT deployment that is common 
+        in IPv4. For this reason it makes sense to use a 64-bit prefix as the basis for rate limiting in IPv6.</t>
+      <t> The number of half-open SAs is easy to measure, but it is also worthwhile to measure the number of failed IKE_AUTH 
+        exchanges. If possible, both factors should be taken into account when deciding which IP address or prefix is considered 
+        suspicious.</t>
       <t> There are two ways to rate-limit a peer address or prefix:<list style="numbers">
         <t> Hard Limit - where the number of half-open SAs is capped, and any further IKE_SA_INIT requests are rejected.</t>
-        <t> Soft Limit - where if a set number of half-open SAs exist for a particular address or prefix, any IKE_SA_INIT request will require solving a puzzle.</t></list></t>
-      <t> The advantage of the hard limit method is that it provides a hard cap on the amount of half-open SAs that the attacker is able to create. The downside is that it allows the attacker to block IKE initiation from small parts of the Internet. For example, <!-- David Waltermire: it may be better to choose a more mundane example --> if a certain purveyor of beverages resembling coffee provides Internet connectivity to its customers through an IPv4 NAT device, a single malicious customer can create enough half-open SAs to fill the quota for the NAT device external IP address. Legitimate initiators on the same network will not be able to initiate IKE.</t>
-      <t> The advantage of a soft limit is that legitimate clients can always connect. The disadvantage is that an adversary with sufficient CPU resources can still effectively DoS the responder.</t>
-      <t> <!-- David Waltermire: The last sentence in this section starting with “Regardless” is difficult to parse. Consider rephrasing --> Regardless of the type of rate-limiting used, there is a huge advantage in blocking the DoS attack using rate-limiting in that legitimate clients who are away from the attacking nodes should not be adversely affected by either the attack or by the measures used to counteract it.</t>
+        <t> Soft Limit - where if a set number of half-open SAs exist for a particular address or prefix, any IKE_SA_INIT request 
+          will require solving a puzzle.</t></list></t>
+      <t> The advantage of the hard limit method is that it provides a hard cap on the amount of half-open SAs that the attacker is 
+        able to create. The downside is that it allows the attacker to block IKE initiation from small parts of the Internet. For 
+        example, 
+        <!-- David Waltermire: it may be better to choose a more mundane example --> 
+        if a certain purveyor of beverages resembling coffee provides Internet connectivity to its customers through an IPv4 
+        NAT device, a single malicious customer can create enough half-open SAs to fill the quota for the NAT device external IP 
+        address. Legitimate initiators on the same network will not be able to initiate IKE.</t>
+      <t> The advantage of a soft limit is that legitimate clients can always connect. The disadvantage is that an adversary with 
+        sufficient CPU resources can still effectively DoS the responder.</t>
+      <t> <!-- David Waltermire: The last sentence in this section starting with “Regardless” is difficult to parse. Consider rephrasing --> 
+        Regardless of the type of rate-limiting used, there is a huge advantage in blocking the DoS attack using rate-limiting in 
+        that legitimate clients who are away from the attacking nodes should not be adversely affected by either the attack or by the 
+        measures used to counteract it.</t>
     </section>
     <section anchor="plan" title="Plan for Defending a Responder">
-      <t> This section outlines a plan for defending a responder from a DDoS attack based on the techniques described earlier. The numbers given here are not normative, and their purpose is to illustrate the configurable parameters needed for defeating the DDoS attack.</t>
-      <t> Implementations may be deployed in different environments, so it is RECOMMENDED that the parameters be settable. As an example, most commercial products are required to undergo benchmarking where the IKE SA establishment rate is measured. Benchmarking is indistinguishable from a DoS attack and the defenses described in this document may defeat the benchmark by causing exchanges to fail or take a long time to complete. Parameters should be tunable to allow for benchmarking (if only by turning DDoS protection off).</t>
-      <t> Since all countermeasures may cause delays and work on the initiators, they SHOULD NOT be deployed unless an attack is likely to be in progress. To minimize the burden imposed on initiators, the responder should monitor incoming IKE requests, searching for two things:<list style="numbers">
-        <t> A general DDoS attack. Such an attack is indicated by a high number of concurrent half-open SAs, a high rate of failed IKE_AUTH exchanges, or a combination of both. For example, consider a responder that has 10,000 distinct peers of which at peak 7,500 concurrently have VPN tunnels. At the start of peak time, 600 peers might establish tunnels at any given minute, and tunnel establishment (both IKE_SA_INIT and IKE_AUTH) takes anywhere from 0.5 to 2 seconds. For this responder, we expect there to be less than 20 concurrent half-open SAs, so having 100 concurrent half-open SAs can be interpreted as an indication of an attack. Similarly, IKE_AUTH request decryption failures should never happen. Supposing the the tunnels are established using EAP (see Section 2.16 of <xref target="RFC7296"/>), users enter the wrong password about 20% of the time. So we'd expect 125 wrong password failures a minute. If we get IKE_AUTH decryption failures from multiple sources more than once per second, or EAP failure more than 300 times per minute, that can also be an indication of a DDoS attack.</t>
-        <t> An attack from a particular IP address or prefix. Such an attack is indicated by an inordinate amount of half-open SAs from that IP address or prefix, or an inordinate amount of IKE_AUTH failures. A DDoS attack may be viewed as multiple such attacks. If they are mitigated well enough, there will not be a need enact countermeasures on all initiators. Typical measures might be 5 concurrent half-open SAs, 1 decrypt failure, or 10 EAP failures within a minute.</t></list></t>
-      <t> Note that using counter-measures against an attack from a particular IP address may be enough to avoid the overload on the half-open SA database and in this case the number of failed IKE_AUTH exchanges never exceeds the threshold of attack detection. This is a good thing as it prevent initiators that are not close to the attackers from being affected.</t>
-      <t> When there is no general DDoS attack, it is suggested that no cookie or puzzles be used. At this point the only defensive measure is the monitoring of the number of half-open SAs, and setting a soft limit per peer IP or prefix. The soft limit can be set to 3-5, and the puzzle difficulty should be set to such a level (number of zero-bits) that all legitimate clients can handle  it without degraded user experience.</t>
-      <t> As soon as any kind of attack is detected, either a lot of initiations from multiple sources or a lot of initiations from a few sources, it is best to begin by requiring stateless cookies from all initiators. This will force the attacker to use real source addresses, and help avoid the need to impose a greater burden in the form of cookies on the general population of initiators. This makes the per-node or per-prefix soft limit more effective.</t>
-      <t> When cookies are activated for all requests and the attacker is still managing to consume too many resources, the responder MAY increase the difficulty of puzzles imposed on IKE_SA_INIT requests coming from suspicious nodes/prefixes. It should still be doable by all legitimate peers, but it can degrade experience, for example by taking up to 10 seconds to solve the puzzle.</t>
-      <t> If the load on the responder is still too great, and there are many nodes causing multiple half-open SAs or IKE_AUTH failures, the responder MAY impose hard limits on those nodes.</t>
-      <t> If it turns out that the attack is very widespread and the hard caps are not solving the issue, a puzzle MAY be imposed on all initiators. Note that this is the last step, and the responder should avoid this if possible.</t>
+      <t> This section outlines a plan for defending a responder from a DDoS attack based on the techniques described earlier. 
+        The numbers given here are not normative, and their purpose is to illustrate the configurable parameters needed for 
+        defeating the DDoS attack.</t>
+      <t> Implementations may be deployed in different environments, so it is RECOMMENDED that the parameters be settable. As 
+        an example, most commercial products are required to undergo benchmarking where the IKE SA establishment rate is measured. 
+        Benchmarking is indistinguishable from a DoS attack and the defenses described in this document may defeat the benchmark 
+        by causing exchanges to fail or take a long time to complete. Parameters should be tunable to allow for benchmarking (if 
+        only by turning DDoS protection off).</t>
+      <t> Since all countermeasures may cause delays and work on the initiators, they SHOULD NOT be deployed unless an attack is 
+        likely to be in progress. To minimize the burden imposed on initiators, the responder should monitor incoming IKE requests, 
+        searching for two things:<list style="numbers">
+        <t> A general DDoS attack. Such an attack is indicated by a high number of concurrent half-open SAs, a high rate of failed 
+          IKE_AUTH exchanges, or a combination of both. For example, consider a responder that has 10,000 distinct peers of which 
+          at peak 7,500 concurrently have VPN tunnels. At the start of peak time, 600 peers might establish tunnels at any given 
+          minute, and tunnel establishment (both IKE_SA_INIT and IKE_AUTH) takes anywhere from 0.5 to 2 seconds. For this responder,
+          we expect there to be less than 20 concurrent half-open SAs, so having 100 concurrent half-open SAs can be interpreted as 
+          an indication of an attack. Similarly, IKE_AUTH request decryption failures should never happen. Supposing the the tunnels 
+          are established using EAP (see Section 2.16 of <xref target="RFC7296"/>), users enter the wrong password about 20% of the 
+          time. So we'd expect 125 wrong password failures a minute. If we get IKE_AUTH decryption failures from multiple sources 
+          more than once per second, or EAP failure more than 300 times per minute, that can also be an indication of a DDoS 
+          attack.</t>
+        <t> An attack from a particular IP address or prefix. Such an attack is indicated by an inordinate amount of half-open SAs 
+          from that IP address or prefix, or an inordinate amount of IKE_AUTH failures. A DDoS attack may be viewed as multiple such 
+          attacks. If they are mitigated well enough, there will not be a need enact countermeasures on all initiators. Typical 
+          measures might be 5 concurrent half-open SAs, 1 decrypt failure, or 10 EAP failures within a minute.</t></list></t>
+      <t> Note that using counter-measures against an attack from a particular IP address may be enough to avoid the overload on 
+        the half-open SA database and in this case the number of failed IKE_AUTH exchanges never exceeds the threshold of attack 
+        detection. This is a good thing as it prevent initiators that are not close to the attackers from being affected.</t>
+      <t> When there is no general DDoS attack, it is suggested that no cookie or puzzles be used. At this point the only defensive 
+        measure is the monitoring of the number of half-open SAs, and setting a soft limit per peer IP or prefix. The soft limit can 
+        be set to 3-5, and the puzzle difficulty should be set to such a level (number of zero-bits) that all legitimate clients can 
+        handle  it without degraded user experience.</t>
+      <t> As soon as any kind of attack is detected, either a lot of initiations from multiple sources or a lot of initiations from 
+        a few sources, it is best to begin by requiring stateless cookies from all initiators. This will force the attacker to use 
+        real source addresses, and help avoid the need to impose a greater burden in the form of cookies on the general population 
+        of initiators. This makes the per-node or per-prefix soft limit more effective.</t>
+      <t> When cookies are activated for all requests and the attacker is still managing to consume too many resources, the responder 
+        MAY increase the difficulty of puzzles imposed on IKE_SA_INIT requests coming from suspicious nodes/prefixes. It should still 
+        be doable by all legitimate peers, but it can degrade experience, for example by taking up to 10 seconds to solve the 
+        puzzle.</t>
+      <t> If the load on the responder is still too great, and there are many nodes causing multiple half-open SAs or IKE_AUTH 
+        failures, the responder MAY impose hard limits on those nodes.</t>
+      <t> If it turns out that the attack is very widespread and the hard caps are not solving the issue, a puzzle MAY be imposed 
+        on all initiators. Note that this is the last step, and the responder should avoid this if possible.</t>
       <section anchor="resumption" title="Session Resumption">
         <t>When the responder is under attack, it MAY choose to prefer previously authenticated 
         peers who present a Session Resumption ticket (see <xref target="RFC5723"/> for details). 
@@ -730,8 +850,14 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
     </section>
 
     <section anchor="ops_cons" title="Operational Considerations">
-      <t> The difficulty level should be set by balancing the requirement to minimize the latency for legitimate initiators and making things difficult for attackers. A good rule of thumb is for taking about 1 second to solve the puzzle. A typical initiator or bot-net member in 2014 can perform slightly less than a million hashes per second per core, so setting the difficulty level to n=20 is a good compromise. It should be noted that mobile initiators, especially phones are considerably weaker than that. Implementations should allow administrators to set the difficulty level, and/or be able to set the difficulty level dynamically in response to load.</t>
-      <t> Initiators should set a maximum difficulty level beyond which they won't try to solve the puzzle and log or display a failure message to the administrator or user.</t>
+      <t> The difficulty level should be set by balancing the requirement to minimize the latency for legitimate initiators and 
+        making things difficult for attackers. A good rule of thumb is for taking about 1 second to solve the puzzle. A typical 
+        initiator or bot-net member in 2014 can perform slightly less than a million hashes per second per core, so setting the 
+        difficulty level to n=20 is a good compromise. It should be noted that mobile initiators, especially phones are 
+        considerably weaker than that. Implementations should allow administrators to set the difficulty level, and/or be able 
+        to set the difficulty level dynamically in response to load.</t>
+      <t> Initiators should set a maximum difficulty level beyond which they won't try to solve the puzzle and log or display a 
+        failure message to the administrator or user.</t>
     </section>
 
     <section anchor="security" title="Security Considerations">
