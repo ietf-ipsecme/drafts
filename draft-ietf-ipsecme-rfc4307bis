@@ -92,10 +92,12 @@
     
      
       <t> The Internet Key Exchange protocol <xref target="RFC7296" /> is used to negotiate the IPsec parameters,
-        such as encryption algorithms and keys, for protected communications between two endpoints. The IKE protocol
-        itself is protected by encryption that is negotiated between the two endpoints. Different implementations of IKE 
+        such as encryption algorithms and keys, for protected communications between two endpoints. The IKEv2 protocol
+        itself is also protected by encryption, which is also negotiated between the two endpoints. Negotiation 
+        is performed by IKEv2 itself. This document describes the encryption parameters of the IKE protocol,
+        not the encryption parameters of the ESP (IPsec) protocol. Different implementations of IKEv2 
         may negotiate different encryption algorithms based on their individual local policy. To ensure interoperability,
-        a set of "mandatory-to-implement" IKE encryption algorithms is defined.</t>
+        a set of "mandatory-to-implement" IKEv2 encryption algorithms is defined. </t>
         
      <section title="Updating Mandatory to Implement Algorithms">   
       <t> The field of cryptography evolves continiously. New stronger algorithms appear and existing algorithms are found
@@ -213,8 +215,8 @@
         SHOULD be implemented in order to be able to interact with Internet of Things devices. As this case is 
         not a general use case for VPNs, its status is expected to remain to SHOULD. The size of the ICV is 
         expected to be sufficient for most use cases of IKEv2, as far less packets are exchanged on the IKE_SA
-        compared to the IPsec SA. When implemented, ENCR_AES_CCM_8 MUST be implemented for both key length 128
-        and 256 bytes. [PAUL: Why is 256 a MUST for ENCR_AES_CCM_8 but not for other algorithms?]</t>
+        compared to the IPsec SA. When implemented, ENCR_AES_CCM_8 MUST be implemented for key length 128 and 
+        MAY be implemented for key length 256.</t>
         <t> ENCR_3DES has been downgraded from RFC4307 MUST-. All IKEv2 implementation already implement
         ENCR_AES_CBC, so there is no need to keep ENCR_3DES. In addition, ENCR_CHACHA20_POLY1305 provides a more 
         modern alternative to AES. [PAUL: removed 'efficient' as we said above encryption efficiency at the IKE
@@ -226,6 +228,8 @@
   
       <section anchor="algs_prf" title="Type 2 - IKEv2 Pseudo-random Function Transforms">
         <t> Transform Type 2 Algorithms are pseudo-random functions used to generate random values when needed.</t>
+        <t>In general, if you can trust an algorithm as INTEG algorithm, you can and should also use it as the PRF.
+          When using an AEAD cipher, the choice is PRF is open, and picking one of the SHA2 variants is recommended.</t>
         <texttable anchor="tbl_alg2" suppress-title="true">
           <ttcol align="left">Name</ttcol>
           <ttcol align="left">Status</ttcol>
@@ -235,11 +239,11 @@
           <c>PRF_HMAC_SHA1</c><c>MUST-</c><c>[1]</c>
           <c>PRF_AES128_CBC</c><c>SHOULD</c><c>[IoT]</c>
           <postamble> 
-          In general, if you can trust an algorithm as INTEG algorithm, you can and should also use it as the PRF.
-          When using an AEAD cipher, the choice is PRF is open, and picking one of the SHA2 variants is recommended.
+          
           [IoT] - This requirement is for interoperability with IoT 
             </postamble>
         </texttable>
+
         <t> PRF_HMAC_SHA2_256 was not mentioned in RFC4307, as no SHA2 based authentication was mentioned.
         PRF_HMAC_SHA2_256 MUST be implemented  in order to replace SHA1 and PRF_HMAC_SHA1.</t>
         <t> PRF_HMAC_SHA2_512 SHOULD be implemented as as a future replacement of SHA2_256 or when stronger 
@@ -247,9 +251,9 @@
         PRF_HMAC_SHA2_512 is negligible.</t>
         <t> PRF_HMAC_SHA1_96 has been downgraded from MUST in RFC4307. 
         There is an industry-wide trend to deprecate its usage.</t>
-        <t> PRF_AES128_CBC has been downgraded from SHOULD in RFC4307 to only a SHOULD got IoT as it has not seen
-         a wide deployment in regular VPN deployments.  Internet of Things deployments tend to prefer
-        AES based pseudo-random functions in order to avoid implementing SHA2.</t>
+        <t> PRF_AES128_CBC is only recommended in the scope of IoT, as Internet of Things deployments tend to 
+        prefer AES based pseudo-random functions in  order to avoid implementing SHA2. For the wide VPN 
+        deployment, as it has not been widely adopted, it has been downgraded from SHOULD in RFC4307 to MAY.</t>
       </section>
 
       <section anchor="algs_integ" title="Type 3 - IKEv2 Integrity Algorithm Transforms">
@@ -275,9 +279,9 @@
         AUTH_HMAC_SHA2_512 is negligible.</t>
         <t> AUTH_HMAC_SHA1_96 has been downgraded from MUST in RFC4307. 
         There is an industry-wide trend to deprecate its usage.</t>
-        <t> AUTH_AES-XCBC has been downgraded from SHOULD in RFC4307 to only a SHOULD got IoT as it has not seen
-         a wide deployment in regular VPN deployments.  Internet of Things deployments tend to prefer
-        AES based pseudo-random functions in order to avoid implementing SHA2.</t>
+        <t> AUTH_AES-XCBC is only recommended in the scope of IoT, as Internet of Things deployments tend 
+        to prefer AES based pseudo-random functions in  order to avoid implementing SHA2. For the wide VPN
+        deployment, as it has not been widely adopted, it has been downgraded from SHOULD in RFC4307 to MAY.</t>
       </section>
     
       <section anchor="algs_dh" title="Type 4 - IKEv2 Diffie-Hellman Group Transforms">
