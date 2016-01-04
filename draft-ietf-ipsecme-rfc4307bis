@@ -71,7 +71,7 @@
         <email> daniel.migault@ericsson.com </email>
       </address>
     </author>
-    <date year="2015"/>
+    <date year="2016"/>
     <area>Security</area>
     <!-- <workgroup>IPSecME Working Group</workgroup> -->
     <keyword>Internet-Draft</keyword>
@@ -83,7 +83,7 @@
         there is at least one algorithm 
         that all implementations will have available.  This document defines the current algorithm implementation
         requirements and usage guidance of IKEv2. This document does not update the algorithms used for packet
-        encryption using IPsec Ecapsulated Security Payload (ESP)</t>
+        encryption using IPsec Encapsulated Security Payload (ESP)</t>
     </abstract>
   </front>
   <middle>
@@ -313,12 +313,68 @@
         <t> Group 1 or 768-bit MODP Group can be broken within hours using cheap of-the-shelves hardware. It provides
          no security whatsoever.</t>
          <t>Curve25519 has been designed with performance and security in mind and have been recommended by CFRG. At
-         the time of writting, the IKEv2 specification is still at the draft status. This document specifies it as to
+         the time of writing, the IKEv2 specification is still at the draft status. This document specifies it as to
          encourage its implementation and deployment. If it gets widely implemented then it most likely will be
          upgraded to SHOULD or even MUST in the future.</t> 
       </section>
     </section>
+    <section title="IKEv2 Authentication">
+      <t>IKEv2 authentication may involve a signatures verification. Signatures may be used to validate a certificate
+      or to check the signature of the  AUTH value. Cryptographic recommendations regarding certificate validation are out
+      of scope of this document as what mandatory implementations are provided by the PKIX WG. This document is mostly
+      concerned on signature verification and generation for the authentication.</t>
+      <section anchor="auth" title="IKEv2 Authentication Method">
+        <texttable anchor="tbl_auth" suppress-title="true">
+          <ttcol align="left">Number</ttcol>
+          <ttcol align="left">Description</ttcol>
+          <ttcol align="left">Status</ttcol>
+           <ttcol align="left">Comment</ttcol>
+          <c>1</c><c>RSA Digital Signature</c><c>MUST</c><c>With keys length 2048</c>
+          <c>1</c><c>RSA Digital Signature</c><c>SHOULD</c><c>With keys length 3072/4096</c>
+          <c>1</c><c>RSA Digital Signature</c><c>MUST NOT</c><c>With keys length lower than 2048</c>
+          <c>3</c><c>DSS Digital Signature</c><c>MAY</c><c></c>
+          <c>9</c><c>ECDSA with SHA-256 on the P-256 curve</c><c>SHOULD</c><c></c>
+          <c>10</c><c>ECDSA with SHA-384 on the P-384 curve</c><c>SHOULD</c><c></c>
+          <c>11</c><c>ECDSA with SHA-512 on the P-521 curve</c><c>SHOULD</c><c></c>
+          <c>14</c><c>Digital Signature</c><c>SHOULD</c><c></c>
+        </texttable>
+        
+        <t>RSA Digital Signature is mostly kept for interoperability. It is expected to be downgraded 
+        in the future as signatures are based on RSASSA-PKCS1-v1.5, not any more recommemded. 
+        Instead, ore robust use of RSA is expected to be performed via the Digital Signature method.</t>
+        <t>ECDSA family are also expected to be downgraded as it does not provide hash function agility.
+        Instead ECDSA is expected to be performed using the generic Digital Signature method.</t>
+        <t>DSS Digital Signature is bound to SHA-1 and thus is expected to be downgraded to MUST NOT in the future.</t> 
+        <t>Digital Signature is expected to be promoted as it provides hash function, signature format and algorithm agility.</t> 
+      
+      <t>[MGLT: Do we have any recommendation for the authentication based on PSK?]</t> 
+      </section>
+      
+      <section title="Digital Signature Recommendation">
+      
+      <t>Recommended methods: RSA (MUST),  ECDSA (SHOULD), Ed25519 (MAY), Ed25519ph(MAY), Ed448(MAY), Ed448ph(MAY)?</t>
+      
+      <t>Here are the recommendations when a hash function is involved in a signature.</t>
+      
+        <texttable anchor="tbl_has" suppress-title="true">
+          <ttcol align="left">Number</ttcol>
+          <ttcol align="left">Description</ttcol>
+          <ttcol align="left">Status</ttcol>
+           <ttcol align="left">Comment</ttcol>
+          <c>1</c><c>SHA1</c><c>MUST</c><c></c>
+          <c>2</c><c>SHA2-256</c><c>MUST</c><c></c>
+          <c>3</c><c>SHA2-384</c><c>MAY</c><c></c>
+          <c>4</c><c>SHA2-512</c><c>SHOULD</c><c></c>
+          <c> </c><c>Other hash functions</c><c>MUST NOT</c><c></c>
+        </texttable>      
+      
 
+      <t>With the use of Digital Signature, RSASSA-PKCS1-v1.5 MAY be implemented, and RSASSA-PSS MUST be implemented.</t>
+      <t>RSA keys MUST be greater or equal than 20148 bits.</t> 
+      </section>
+    
+
+      </section>
     <section anchor="security" title="Security Considerations">
       <t> The security of cryptographic-based systems depends on both the strength of the cryptographic algorithms 
         chosen and the strength of the keys used with those algorithms.  The security also depends on the engineering 
