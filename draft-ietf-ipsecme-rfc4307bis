@@ -200,17 +200,15 @@
          standarized for IPsec for the same reasons. At the time of writing, there were not enough IKEv2 implementations
          of ENCR_CHACHA20_POLY1305 to be able to introduce it at the SHOULD+ level.</t>
         <t> AES-GCM with a 16 octet ICV was not considered as in RFC4307. At the time RFC4307
-        was written, AES-GCM was not defined in an IETF document. AES-GCM was defined for IPsec/ESP in 
+        was written, AES-GCM was not defined in an IETF document. AES-GCM was defined for ESP in 
         <xref target="RFC4106"/> and later for IKEv2 in <xref target="RFC5282"/>. The main motivation for adopting
-        AES-GCM for IPsec/ESP is encryption performance as well as key longevity - compared to AES-CBC for example. 
-        This resulted in AES-GCM widely implemented for IPsec/ESP. As the load of IKEv2 is expected to remain 
+        AES-GCM for ESP is encryption performance as well as key longevity - compared to AES-CBC for example. 
+        This resulted in AES-GCM widely implemented for ESP. As the load of IKEv2 is expected to remain 
         relatively small, many IKEv2 implementations do not include AES-GCM. In addition to its former MAY, this document
         does not promote AES-GCM to a greater status than SHOULD so to preserve interoperability between IKEv2
         implementations. [PAUL: I dont follow the reasoning, as we could have AES and AES-GCM at MUST level]
         This document considers AES-GCM as mandatory to implement to promote the slightly more secure AEAD method
-        over the traditional encrypt+auth method. Its status is expected to be raised once widely deployed.
-        [PAUL: This introduces the term IPsec/ESP. I would prefer to just call it IPsec. This document is for
-        IKE and IPsec developers so they should know] </t>
+        over the traditional encrypt+auth method. Its status is expected to be raised once widely deployed.</t>
         <t> ENCR_AES_CCM_8 was not considered in RFC4307. This document considers it 
         SHOULD be implemented in order to be able to interact with Internet of Things devices. As this case is 
         not a general use case for VPNs, its status is expected to remain to SHOULD. The size of the ICV is 
@@ -308,7 +306,7 @@
          so its security margin is considered too narrow.</t>
         <t> Group 2 or 1024-bit MODP Group is downgrade from MUST- to SHOULD NOT. 
         It was specified earlier, but now it is known to be weak against sufficiently funded attackers using commercially
-        available mass-computing resources, so its security margin is considered too narrow. It is sexpected in the
+        available mass-computing resources, so its security margin is considered too narrow. It is expected in the
         near future to be downgraded to MUST NOT.</t>
         <t> Group 1 or 768-bit MODP Group can be broken within hours using cheap of-the-shelves hardware. It provides
          no security whatsoever.</t>
@@ -341,7 +339,7 @@
         
         <t>RSA Digital Signature is mostly kept for interoperability. It is expected to be downgraded 
         in the future as signatures are based on RSASSA-PKCS1-v1.5, not any more recommemded. 
-        Instead, ore robust use of RSA is expected to be performed via the Digital Signature method.</t>
+        Instead, more robust use of RSA is expected to be performed via the Digital Signature method.</t>
         <t>ECDSA family are also expected to be downgraded as it does not provide hash function agility.
         Instead ECDSA is expected to be performed using the generic Digital Signature method.</t>
         <t>DSS Digital Signature is bound to SHA-1 and thus is expected to be downgraded to MUST NOT in the future.</t> 
