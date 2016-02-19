@@ -19,7 +19,7 @@
 <?rfc sortrefs="no" ?>
 <?rfc rfcedstyle="yes"?>
 
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-05" category="std">
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-xx" category="std">
 
   <front>
     <title abbrev="DDoS Protection for IKE">Protecting Internet Key Exchange (IKE) Implementations from Distributed Denial of Service Attacks</title>
@@ -48,7 +48,7 @@
         <email>svan@elvis.ru</email>
       </address>
     </author>
-    <date year="2015"/>
+    <date year="2016" />
     <area>Security Area</area>
     <workgroup>IPSecME Working Group</workgroup>
     <keyword>Internet-Draft</keyword>
@@ -160,7 +160,8 @@
         proof-of-work technique used in Bitcoins <xref target="bitcoins" />.</t>
       <t> A puzzle is sent to the Initiator in two cases:<list style="symbols">
         <t> The Responder is so overloaded, then no half-open SAs are allowed to be created without the puzzle, or</t>
-        <!-- David Waltermire: The sentence containing the following text is difficult to parse. Consider rewording. -->
+        <!-- David Waltermire: The sentence containing the following text is difficult to parse. Consider rewording.
+                               [daw: I am at a loss for a shorter way to say this. I'd say leave it as it is.] -->
         <t> The Responder is not too loaded, but the rate-limiting method described in <xref target="ratelimit" /> prevents half-open 
           SAs from being created with this particular peer address or prefix without first solving a puzzle.</t></list></t>
       <t> When the Responder decides to send the challenge notification in response to a IKE_SA_INIT request, the notification 
@@ -245,18 +246,15 @@
         <t> Soft Limit - where if a set number of half-open SAs exist for a particular address or prefix, any IKE_SA_INIT request 
           will require solving a puzzle.</t></list></t>
       <t> The advantage of the hard limit method is that it provides a hard cap on the amount of half-open SAs that the attacker is 
-        able to create. The downside is that it allows the attacker to block IKE initiation from small parts of the Internet. For 
-        example, 
-        <!-- David Waltermire: it may be better to choose a more mundane example --> 
-        if a certain purveyor of beverages resembling coffee provides Internet connectivity to its customers through an IPv4 
-        NAT device, a single malicious customer can create enough half-open SAs to fill the quota for the NAT device external IP 
-        address. Legitimate Initiators on the same network will not be able to initiate IKE.</t>
+        able to create. The downside is that it allows the attacker to block IKE initiation from small parts of the Internet. 
+        For example, if an network service provider or some establishment offers Internet connectivity to its customers or 
+        employees through an IPv4 NAT device, a single malicious customer can create enough half-open SAs to fill the quota 
+        for the NAT device external IP address. Legitimate Initiators on the same network will not be able to initiate IKE.</t>
       <t> The advantage of a soft limit is that legitimate clients can always connect. The disadvantage is that an adversary with 
         sufficient CPU resources can still effectively DoS the Responder.</t>
-      <t> <!-- David Waltermire: The last sentence in this section starting with “Regardless” is difficult to parse. Consider rephrasing --> 
-        Regardless of the type of rate-limiting used, there is a huge advantage in blocking the DoS attack using rate-limiting in 
-        that legitimate clients who are away from the attacking nodes should not be adversely affected by either the attack or by the 
-        measures used to counteract it.</t>
+      <t> Regardless of the type of rate-limiting used, there is a huge advantage in blocking the DoS attack using rate-limiting 
+        for legitimate clients that are away from the attacking nodes. In such cases, adverse impacts caused by the attack 
+        or by the measures used to counteract the attack can be avoided.</t>
     </section>
     <section anchor="plan" title="Plan for Defending a Responder">
       <t> This section outlines a plan for defending a Responder from a DDoS attack based on the techniques described earlier. 
