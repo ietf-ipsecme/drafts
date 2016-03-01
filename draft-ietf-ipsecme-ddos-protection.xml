@@ -22,7 +22,7 @@
 <rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-xx" category="std">
 
   <front>
-    <title abbrev="DDoS Protection for IKE">Protecting Internet Key Exchange (IKE) Implementations from Distributed Denial of Service Attacks</title>
+    <title abbrev="DDoS Protection for IKEv2">Protecting Internet Key Exchange Protocol version 2 (IKEv2) Implementations from Distributed Denial of Service Attacks</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
       <organization abbrev="Check Point">Check Point Software Technologies Ltd.</organization>
       <address>
@@ -53,7 +53,8 @@
     <workgroup>IPSecME Working Group</workgroup>
     <keyword>Internet-Draft</keyword>
     <abstract>
-      <t> This document recommends implementation and configuration best practices for Internet-connected IPsec Responders, to allow 
+      <t> This document recommends implementation and configuration best practices for 
+        Internet Key Exchange Protocol version 2 (IKEv2) Responders, to allow 
         them to resist Denial of Service and Distributed Denial of Service attacks. Additionally, the document introduces a new 
         mechanism called "Client Puzzles" that help accomplish this task.</t>
     </abstract>
@@ -380,7 +381,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     </t>
                     <t>If the Responder sets non-zero difficulty level, then the level should be 
                     determined by analyzing the volume of the attack. The Responder MAY set different 
-                    difficulty levels to different requested depending on the IP address 
+                    difficulty levels to different requests depending on the IP address 
                     the request has come from.
                     </t>
                 </section>
@@ -394,9 +395,9 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     but has a means to replace one set with another and negotiate new set with the peer. 
                     IKEv2 fully supports cryptographic algorithm agility for its core operations.
                     </t>
-                    <t>To support this feature in case of puzzles the algorithm, that is used 
-                    to compute puzzle, needs to be negotiated during IKE_SA_INIT exchange. 
-                    The negotiation is done as follows. The initial request message sent by Initiator 
+                    <t>To support this feature in case of puzzles, the algorithm that is used 
+                    to compute puzzle needs to be negotiated during IKE_SA_INIT exchange. 
+                    The negotiation is performed as follows. The initial request message sent by Initiator 
                     contains SA payload with the list of transforms the Initiator supports 
                     and is willing to use in the IKE SA being established. The Responder parses 
                     received SA payload and finds mutually supported set of transforms of type PRF. 
@@ -408,7 +409,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     NO_PROPOSAL_CHOSEN notification. Note that PRF is a mandatory transform type 
                     for IKE SA (see Sections 3.3.2 and 3.3.3 of <xref target="RFC7296"/>) 
                     and at least one transform of this type must always be present in SA payload 
-                    in IKE_SA_INIT exchange.
+                    in IKE_SA_INIT request message.
                     </t>
                 </section>
                 <section anchor="compcookie" title="Generating Cookie">
@@ -442,7 +443,7 @@ Cookie = <VersionIDofSecret> | <AdditionalInfo> |
                     <t>Alternatively, the Responder may continue to generate cookie as suggested in
                     Section 2.6 of <xref target="RFC7296"/>, but associate the additional information,
                     that would be stored locally, with the particular version of the secret.
-                    In this case the Responder should have different secret for every combination 
+                    In this case the Responder should have different secrets for every combination 
                     of difficulty level and number of consecutive puzzles, and should change 
                     the secrets periodically, keeping a few previous versions, to be able to calculate 
                     how long ago the cookie was generated.
@@ -486,19 +487,20 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             <section anchor="comppuzzleinit" title="Computing Puzzle">
                 <t>General principals of constructing puzzles in IKEv2 are described 
                 in <xref target="puzzles"/>. They can be summarized as follows: given
-                unpredictable string S and pseudo-random function PRF find the key K for
-                that PRF so that the result of PRF(K,S) has the specified number 
-                of trailing zero bits.
+                unpredictable string S and pseudo-random function PRF find N different keys Ki 
+                (where i=[1..N]) for that PRF so that the result of PRF(Ki,S) has at least 
+                the specified number of trailing zero bits. This specification requires that 
+                the solution to the puzzle contains 4 different keys (i.e. N=4).
                 </t>
                 <t>In the IKE_SA_INIT exchange it is the cookie that plays the role of 
                 unpredictable string S. In other words, in IKE_SA_INIT the task for 
-                the IKE Initiator is to find the key K for the agreed upon PRF such that 
-                the result of PRF(K,cookie) has sufficient number of trailing zero bits.
+                the IKE Initiator is to find the four different keys Ki for the agreed upon PRF such that 
+                each result of PRF(Ki,cookie) where i = [1..4] has a sufficient number of trailing zero bits.
                 Only the content of the COOKIE notification is used in puzzle
                 calculation, i.e. the header of the Notification payload is not included.
                 </t>
                 <t>Note, that puzzles in the IKE_AUTH exchange are computed differently
-                that in the IKE_SA_INIT_EXCHANGE. See <xref target="comppuzzleauth"/> for details.
+                than in the IKE_SA_INIT_EXCHANGE. See <xref target="comppuzzleauth"/> for details.
                 </t>
             </section>
             <section anchor="analyzerequest" title="Analyzing Repeated Request">
@@ -507,7 +509,9 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 <xref target="ikesainit"/>. First, the cookie MUST be checked for validity. 
                 If the cookie is invalid, then the request is treated
                 as initial and is processed according to <xref target="ikesainit"/>.
-                If the cookie is valid then some important information is learned
+                It is RECOMMENDED that a new cookie is requested in this case.
+                </t>
+                <t>If the cookie is valid then some important information is learned
                 from it or from local state based on identifier of the cookie's secret
                 (see <xref target="compcookie"/> for details).
                 This information helps the Responder to sort out incoming requests,
@@ -532,20 +536,24 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 lowest priority since the Initiator spent little resources creating it.
                 </t>
                 <t>If a PS payload is found in the message, then the Responder MUST verify 
-                the puzzle solution that it contains. The result must contain at least the
-                requested number of trailing zero bits (that is also learned from the cookie,
-                as well as the PRF algorithm used in puzzle solution). If the result of 
-                the solution contains fewer bits than were requested, it means that Initiator
-                spent less resources than expected by the Responder. This request
-                is marked with the lowest priority.
+                the puzzle solution that it contains. The solution is interpreted as four
+                different keys. The result of using each of them in the PRF (as described in <xref target="comppuzzleinit"/>) 
+                must contain at least the requested number of trailing zero bits. 
+                The Responder MUST check all the four returned keys.
+                </t>
+                <t>If any checked result contains fewer bits than were requested, it means that 
+                the Initiator spent less resources than expected by the Responder. This request
+                is marked with the lowest priority.  
                 </t>
                 <t>If the Initiator provided the solution to the puzzle satisfying the requested 
                 difficulty level, or if the Responder didn't indicate any particular difficulty 
-                level (by requesting zero level) and the Initiator was free to select any
+                level (by setting ZBC to zero) and the Initiator was free to select any
                 difficulty level it can afford, then the priority of the request is calculated
                 based on the following considerations:
                 <list style="symbols">
-                    <t>The higher zero bits the Initiator got, the higher priority its request should receive.</t>
+                    <t>The Responder must take the smallest number of trailing zero bits among the checked results
+                        and count it as the number of zero bits the Initiator got.</t>
+                    <t>The higher number of zero bits the Initiator got, the higher priority its request should receive.</t>
                     <t>The more consecutive puzzles the Initiator solved, the higher priority it should receive.</t>
                     <t>The more time the Initiator spent solving the puzzles, the higher priority it should receive.</t>
                 </list>
@@ -561,18 +569,18 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                     <t>Reject request.</t>
                     <t>Demand more work from Initiator by giving it a new puzzle.</t>
                 </list>
-                The Responder SHOULD accept incoming request if its priority is high - 
+                The Responder SHOULD accept an incoming request if its priority is high - 
                 it means that the Initiator spent quite a lot of resources.
                 The Responder MAY also accept some of low-priority requests where
                 the Initiators don't support puzzles. The percentage of accepted
                 legacy requests depends on the Responder's current load.
                 </t>
-                <t>If Initiator solved the puzzle, but didn't spend much resources
+                <t>If the Initiator solved the puzzle, but didn't spend much resources
                 for it (the selected puzzle difficulty level appeared to be low and the Initiator
                 solved it quickly), then the Responder SHOULD give it another puzzle.
                 The more puzzles the Initiator solves the higher its chances are 
                 to be served.</t>
-                <t>The details of how the Responder makes decision on any particular
+                <t>The details of how the Responder makes a decision for any particular
                 request, are implementation dependent. The Responder can collect all the
                 incoming requests for some short period of time, sort them out 
                 based on their priority, calculate the number of available memory
@@ -587,7 +595,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
         </section>
         <section anchor="ikeauth" title="Puzzles in IKE_AUTH Exchange">
             <t>Once the IKE_SA_INIT exchange is completed, the Responder has created 
-            a state and is waiting for the first message of the IKE_AUTH exchange from Initiator.
+            a state and is waiting for the first message of the IKE_AUTH exchange from the Initiator.
             At this point the Initiator has already passed return routability check
             and has proved that it has performed some work to complete IKE_SA_INIT exchange.
             However, the Initiator is not yet authenticated and this fact allows
@@ -630,7 +638,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                     ]]></artwork>
                 </figure>
                 <section anchor="diflevelauth" title="Selecting Puzzle Difficulty Level">
-                    <t>The difficulty level of the puzzle in IKE_AUTH should be chosen so
+                    <t>The difficulty level of the puzzle in IKE_AUTH exchange should be chosen so
                     that the Initiator would spend more time to solve the puzzle
                     than the Responder to compute the D-H shared secret and
                     the keys, needed to decrypt and verify the IKE_AUTH request message.
@@ -640,7 +648,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                     </t>
                     <t>Note, that since puzzles in the IKE_AUTH exchange are only allowed 
                     to be used if they were used in the preceding IKE_SA_INIT exchange, 
-                    the Responder would be able to estimate the computing power of 
+                    the Responder would be able to estimate the computational power of 
                     the Initiator and to select the difficulty level accordingly.
                     Unlike puzzles in IKE_SA_INIT, the requested difficulty level
                     for IKE_AUTH puzzles MUST NOT be zero. In other words, the Responder
@@ -689,11 +697,11 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 The general principle is the same; the difference is in the construction 
                 of the string S. Unlike the IKE_SA_INIT exchange, where S is the cookie, 
                 in the IKE_AUTH exchange S is a concatenation of Nr and SPIr. 
-                In other words,  the task for IKE Initiator is to find the key K 
-                for the agreed upon PRF such that the result of PRF(K,Nr | SPIr) 
+                In other words,  the task for IKE Initiator is to find the four different keys Ki 
+                for the agreed upon PRF such that each result of PRF(Ki,Nr | SPIr) where i=[1..4]
                 has a sufficient number of trailing zero bits.
                 Nr is a nonce used by the Responder in IKE_SA_INIT exchange, stripped 
-                of any headers. SPIr is IKE Responder SPI in the SA being established.
+                of any headers. SPIr is IKE Responder's SPI from the IKE header of the SA being established.
                 </t>
             </section>
             <section anchor="receivepuzzle" title="Receiving Puzzle Solution">
@@ -704,8 +712,10 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 <t>Once the message containing a solution to the puzzle is received, 
                 the Responder MUST verify the solution before performing computationlly
                 intensive operations i.e. computing the D-H shared secret
-                and the SK_* keys. The Responder MUST silently discard the received
-                message if the puzzle solution is not correct (has insufficient number of trailing zero bits). 
+                and the SK_* keys. The Responder MUST verify all the four returned keys.
+                </t>
+                <t>The Responder MUST silently discard the received message 
+                if any checked verification result is not correct (contains insufficient number of trailing zero bits). 
                 If the Responder successfully verifies the puzzle and calculates the SK_* key, 
                 but the message authenticity check fails, then it SHOULD 
                 save the calculated keys in the IKE SA state while waiting for 
@@ -753,21 +763,21 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         IKE SA is established are mostly intended for implementations that allow
         unauthenticated IKE sessions; however, they may also be useful in other cases.
         <list style="symbols">
-            <t>If the IKEv2 window size is greater than one, then the peer could initiate multiple
+            <t> If the IKEv2 window size is greater than one, then the peer could initiate multiple
             simultaneous exchanges that could increase host resource consumption.
             Since currently there is no way in IKEv2 to decrease window size once it was increased 
             (see Section 2.3 of <xref target="RFC7296"/>), the window size cannot be dynamically 
             adjusted depending on the load. For that reason, it is NOT RECOMMENDED to ever increase 
             the IKEv2 window size above its default value of one if the peer uses NULL Authentication.
             </t>
-            <t>If the peer initiates requests to rekey IKE SA or Child SA too often, implementations
+            <t> If the peer initiates requests to rekey IKE SA or Child SA too often, implementations
             can respond to some of these requests with the TEMPORARY_FAILURE notification,
             indicating that the request should be retried after some period of time.
             </t>
-            <t>If the peer creates too many Child SA with the same or overlapping Traffic Selectors,
+            <t> If the peer creates too many Child SA with the same or overlapping Traffic Selectors,
             implementations can respond with the NO_ADDITIONAL_SAS notification.
             </t>
-            <t>If the peer initiates too many exchanges of any kind, implementations can
+            <t> If the peer initiates too many exchanges of any kind, implementations can
             introduce an artificial delay before responding to request messages. This delay
             would decrease the rate the implementation need to process requests from 
             any particular peer, making it possible to process requests from the others.
@@ -776,7 +786,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
             if the Responder receives retransmissions of the request message during 
             the delay period, the retransmitted messages should be silently discarded.
             </t>
-            <t>If these counter-measures are inefficient, implementations can
+            <t> If these counter-measures are inefficient, implementations can
             delete the IKE SA with an offending peer by sending Delete Payload.
             </t>
         </list>
@@ -784,7 +794,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
     </section>
     <section title="Payload Formats">
         <section anchor="puzzlentf" title="PUZZLE Notification">
-            <t>The PUZZLE notification is used by the IKE Responder to inform the Initiator
+            <t> The PUZZLE notification is used by the IKE Responder to inform the Initiator
             about the necessity to solve the puzzle. It contains the difficulty level 
             of the puzzle and the PRF the Initiator should use.</t>
             <figure align="center">
@@ -801,25 +811,25 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 ]]></artwork>
             </figure>
             <t><list style="symbols">
-                <t>Protocol ID (1 octet) - MUST be 0.</t>
-                <t>SPI Size (1 octet) - MUST be 0, meaning no Security Parameter Index (SPI) is present.</t>
-                <t>Notify Message Type (2 octets) - MUST be &lt;TBA by IANA&gt;, the value assigned for the
+                <t> Protocol ID (1 octet) -- MUST be 0.</t>
+                <t> SPI Size (1 octet) - MUST be 0, meaning no Security Parameter Index (SPI) is present.</t>
+                <t> Notify Message Type (2 octets) -- MUST be &lt;TBA by IANA&gt;, the value assigned for the
                 PUZZLE notification.</t>
-                <t>PRF (2 octets) - Transform ID of the PRF algorithm that must be used to solve 
+                <t>PRF (2 octets) -- Transform ID of the PRF algorithm that must be used to solve 
                 the puzzle. Readers should refer to the section "Transform Type 2 - Pseudo-Random 
                 Function Transform IDs" in <xref target="IKEV2-IANA"/> for the list of possible values.
                 </t>
-                <t>Difficulty (1 octet) - Difficulty Level of the puzzle. Specifies minimum number 
-                of trailing zero bit, that the result of PRF must contain.
+                <t> Difficulty (1 octet) -- Difficulty Level of the puzzle. Specifies minimum number 
+                of trailing zero bits (ZBC), that each of the results of PRF must contain.
                 Value 0 means that the Responder doesn't request any specific difficulty
-                level and the Initiator is free to select appropriate difficulty level of its own
+                level and the Initiator is free to select appropriate difficulty level on its own
                 (see <xref target="diflevelinit" /> for details).
                 </t>
             </list></t>
             <t>This notification contains no data.</t>
         </section>
         <section anchor="puzzlesolutionpld" title="Puzzle Solution Payload">
-            <t>The solution to the puzzle is returned back to the Responder in a dedicated payload,
+            <t> The solution to the puzzle is returned back to the Responder in a dedicated payload,
             called the Puzzle Solution payload and denoted as PS in this document.</t>
             <figure align="center">
                 <artwork align="left"><![CDATA[
@@ -835,15 +845,20 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 ]]></artwork>
             </figure>
             <t><list style="symbols">
-                <t>Puzzle Solution Data (variable length) - Contains the solution to the 
-                puzzle - i.e. the key for the PRF. This field MUST NOT be empty.
-                If the selected PRF has a fixed-size key, then the size of the 
-                Puzzle Solution Data MUST be equal to the size of the key. If the PRF 
-                agreed upon accepts keys of any size, then then the size of the 
-                Puzzle Solution Data MUST be between 1 octet and the preferred key
-                length of the PRF (inclusive).</t>
+                <t> Puzzle Solution Data (variable length) -- Contains the solution to the 
+                puzzle - four different keys for the selected PRF. This field MUST NOT be empty. 
+                All the keys MUST have the same size, therefore the size of this field is always a mutiple of 4 bytes.
+                If the selected PRF accepts only fixed-size keys, then the size of each key 
+                MUST be of that fixed size. If the PRF agreed upon accepts keys of any size, then then the size of 
+                each key MUST be between 1 octet and the preferred key length of the PRF 
+                (inclusive). It is expected that in most cases the keys will be 4 (or even less) octets in length, 
+                however it depends on puzzle difficulty and on the Initiator's strategy to find solutions,
+                and thus the size is not mandated by this specification.
+                The Responder determines the size of each key by dividing the size of the
+                Puzzle Solution Data by 4 (the number of keys). Note that the size of Puzzle Solution Data is 
+                the size of Payload (as indicated in Payload Length field) minus 4 - the size of Payload Header.</t>
             </list></t>
-            <t>The payload type for the Puzzle Solution payload is &lt;TBA by IANA&gt;.</t>
+            <t> The payload type for the Puzzle Solution payload is &lt;TBA by IANA&gt;.</t>
         </section>
     </section>
 
@@ -899,6 +914,16 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 ]]></artwork>
             </figure>
     </section>
+
+    <section anchor="ack" title="Acknowledgements">  
+        <t>The authors thank Tero Kivinen, Yaron Sheffer and Scott Fluhrer for their contribution into design
+        of the protocol. In particular, Tero Kivinen suggested the kind of puzzle where the task is to find
+        a solution with requested number of zero trailing bits. Yaron Sheffer and Scott Fluhrer suggested
+        a way to make puzzle difficulty less erratic by solving several weaker puzles. The authors also thank
+        David Waltermire for his carefull review of the draft and all others who commented the document.
+        </t>
+    </section>
+
   </middle>
   <!-- ====================================================================== -->
   <back>
