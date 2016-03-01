@@ -19,7 +19,7 @@
 <?rfc sortrefs="no" ?>
 <?rfc rfcedstyle="yes"?>
 
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-xx" category="std">
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-ddos-protection-04" category="std">
 
   <front>
     <title abbrev="DDoS Protection for IKEv2">Protecting Internet Key Exchange Protocol version 2 (IKEv2) Implementations from Distributed Denial of Service Attacks</title>
@@ -160,7 +160,7 @@
       <t> The puzzle introduced here extends the cookie mechanism from <xref target="RFC7296"/>. It is loosely based on the 
         proof-of-work technique used in Bitcoins <xref target="bitcoins" />.</t>
       <t> A puzzle is sent to the Initiator in two cases:<list style="symbols">
-        <t> The Responder is so overloaded, then no half-open SAs are allowed to be created without the puzzle, or</t>
+        <t> The Responder is so overloaded that no half-open SAs may be created without solving a puzzle, or</t>
         <!-- David Waltermire: The sentence containing the following text is difficult to parse. Consider rewording.
                                [daw: I am at a loss for a shorter way to say this. I'd say leave it as it is.] -->
         <t> The Responder is not too loaded, but the rate-limiting method described in <xref target="ratelimit" /> prevents half-open 
@@ -178,43 +178,48 @@
           either the same ZBC is used for all Initiators, or the ZBC is somehow encoded in the cookie. If it is global then it means that 
           this value is the same for all the Initiators who are receiving puzzles at any given point of time. The Responder, however, 
           may change this value over time depending on its load.</t></list></t>
-      <t> Upon receiving this challenge, the Initiator attempts to calculate the PRF using different keys. When a key is found such 
-        that the resulting PRF output has a sufficient number of trailing zero bits, that result is sent to the Responder.</t>
+      <t> Upon receiving this challenge, the Initiator attempts to calculate the PRF using different keys. 
+        When enough keys are found such that the resulting PRF output calculated using each of them has a 
+        sufficient number of trailing zero bits, that result is sent to the Responder.</t>
+      <t> The reason for using several keys in the results rather than just one key is to reduce the variance 
+        in the time it takes the initiator to solve the puzzle. We have chosen the number of keys to be four (4)
+        as a compromise between the conflicting goals of reducing variance and reducing the work the Responder 
+        needs to perform to verify the puzzle solution.</t>  
       <t> When receiving a request with a solved puzzle, the Responder verifies two things:<list style="symbols">
         <t> That the cookie part is indeed valid.</t>
-        <t> That the PRF of the transmitted cookie calculated with the transmitted key has a sufficient number of trailing zero 
-          bits.</t></list></t>
-      <t> Example 1: Suppose the calculated cookie is fdbcfa5a430d7201282358a2a034de0013cfe2ae (20 octets), the algorithm is 
-        HMAC-SHA256, and the required number of zero bits is 18. After successively trying a bunch of keys, the Initiator finds that 
-        the key that is all-zero except for the last three bytes which are 02fc95 yields HMAC_SHA256(k, cookie) = 
-        843ab73f35c5b431b1d8f80bedcd1cb9ef46832f799c1d4250a49f683c580000, which has 19 trailing zero bits, so it is an acceptable 
-        solution.</t>
-      <t> Example 2: Same cookie, but this time the required number of zero bits is 22. The first key to satisfy that requirement 
-        ends in 960cbb, which yields a hash with 23 trailing zero bits. Finding this requires 9,833,659 invocations of the PRF.</t>
-      <texttable anchor="tbl1" title="The time needed to solve a puzzle of various difficulty for the cookie = fdbcfa5a430d7201282358a2a034de0013cfe2ae">
+        <t> That the PRFs of the transmitted cookie calculated with the transmitted keys has a sufficient 
+          number of trailing zero bits.</t></list></t>
+      <t> Example 1: Suppose the calculated cookie is 739ae7492d8a810cf5e8dc0f9626c9dda773c5a3 (20 octets), 
+        the algorithm is PRF-HMAC-SHA256, and the required number of zero bits is 18. After successively 
+        trying a bunch of keys, the Initiator finds the following four 3-octet keys that work:</t>
+      <texttable anchor="tbl0" title="Three solutions for 18-bit puzzle">
         <ttcol align="center">Key</ttcol>
-        <ttcol align="left">Last 24 Hex PRF Digits</ttcol>
+        <ttcol align="left">Last 32 Hex PRF Digits</ttcol>
         <ttcol align="center"># 0-bits</ttcol>
-        <ttcol align="center">Time to Calculate (seconds)</ttcol>
-<c>00</c><c>0cbbbd1e105f5a177f9697d4</c><c>2</c><c>0.000</c>
-<c>08</c><c>34cdedf89560f600aab93c68</c><c>3</c><c>0.000</c>
-<c>0b</c><c>6153a5131b879a904cd7fbe0</c><c>5</c><c>0.000</c>
-<c>2b</c><c>0098af3e9422aa40a6f7b140</c><c>6</c><c>0.000</c>
-<c>0147</c><c>c8bf4a65fc8b974046b97c00</c><c>10</c><c>0.001</c>
-<c>06e2</c><c>541487a10cbdf3b21c382800</c><c>11</c><c>0.005</c>
-<c>0828</c><c>48719bd62393fcf9bc172000</c><c>13</c><c>0.006</c>
-<c>0204a7</c><c>3dce3414477c2364d5198000</c><c>15</c><c>0.186</c>
-<c>185297</c><c>c19385bb7b9566e5fdf00000</c><c>20</c><c>2.146</c>
-<c>69dc34</c><c>1b61ecb347cb2e0cba200000</c><c>21</c><c>9.416</c>
-<c>960cbb</c><c>e48274bfac2b7e1930800000</c><c>23</c><c>13.300</c>
-<c>01597972</c><c>39a0141d0fe4b87aea000000</c><c>25</c><c>30.749</c>
-<c>0b13cd9a</c><c>00b97bb323d6d33350000000</c><c>28</c><c>247.914</c>
-<c>37dc96e4</c><c>1e24babc92234aa3a0000000</c><c>29</c><c>1237.170</c>
-<c>7a1a56d8</c><c>c98f0061e380a49e00000000</c><c>33</c><c>2726.150</c>
+        <c>061840</c><c>e4f957b859d7fb1343b7b94a816c0000</c><c>18</c>
+        <c>073324</c><c>0d4233d6278c96e3369227a075800000</c><c>23</c>
+        <c>0c8a2a</c><c>952a35d39d5ba06709da43af40700000</c><c>20</c>
+        <c>0d94c8</c><c>5a0452b21571e401a3d00803679c0000</c><c>18</c>
+      </texttable>
+      <t> Example 2: Same cookie, but modify the required number of zero bits to 22. The first 4-octet keys 
+        that work to satisfy that requirement are 005d9e57, 010d8959, 0110778d, and 01187e37. Finding these 
+        requires 18,382,392 invocations of the PRF.</t>
+      <texttable anchor="tbl1" title="The time needed to solve a puzzle of various difficulty for the cookie = 739ae7492d8a810cf5e8dc0f9626c9dda773c5a3">
+        <ttcol align="center"># 0-bits</ttcol>
+        <ttcol align="right">Time to Find 4 keys (seconds)</ttcol>
+        <c> 8</c><c> 0.0025</c>
+        <c>10</c><c> 0.0078</c>
+        <c>12</c><c> 0.0530</c>
+        <c>14</c><c> 0.2521</c>
+        <c>16</c><c> 0.8504</c>
+        <c>17</c><c> 1.5938</c>
+        <c>18</c><c> 3.3842</c>
+        <c>19</c><c> 3.8592</c>
+        <c>20</c><c>10.8876</c>
       </texttable>
       <t> The figures above were obtained on a 2.4 GHz single core i5. Run times can be halved or quartered with multi-core code, but 
-        would be longer on mobile phone processors, even if those are multi-core as well. With these figures 20 bits is believed to 
-        be a reasonable choice for puzzle level difficulty for all Initiators, with 24 bits acceptable for specific hosts/prefixes.</t>
+        would be longer on mobile phone processors, even if those are multi-core as well. With these figures 18 bits is believed to 
+        be a reasonable choice for puzzle level difficulty for all Initiators, and 20 bits is acceptable for specific hosts/prefixes.</t>
     </section>
     <section anchor="timelimit" title="Retention Periods for Half-Open SAs">
       <t> As a UDP-based protocol, IKEv2 has to deal with packet loss through retransmissions. Section 2.4 of <xref target="RFC7296"/> 
@@ -494,11 +499,11 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 </t>
                 <t>In the IKE_SA_INIT exchange it is the cookie that plays the role of 
                 unpredictable string S. In other words, in IKE_SA_INIT the task for 
-                the IKE Initiator is to find the four different keys Ki for the agreed upon PRF such that 
-                each result of PRF(Ki,cookie) where i = [1..4] has a sufficient number of trailing zero bits.
-                Only the content of the COOKIE notification is used in puzzle
-                calculation, i.e. the header of the Notification payload is not included.
-                </t>
+                the IKE Initiator is to find the four different, equal-sized keys Ki for the 
+                agreed upon PRF such that each result of PRF(Ki,cookie) where i = [1..4] has a 
+                sufficient number of trailing zero bits. Only the content of the COOKIE notification 
+                is used in puzzle calculation, i.e. the header of the Notification payload is not 
+                included.</t>
                 <t>Note, that puzzles in the IKE_AUTH exchange are computed differently
                 than in the IKE_SA_INIT_EXCHANGE. See <xref target="comppuzzleauth"/> for details.
                 </t>
