@@ -18,7 +18,7 @@
 <?rfc sortrefs="no" ?>
 <?rfc rfcedstyle="yes"?>
 
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-rfc4307bis-03" category="std">
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-rfc4307bis-04" category="std">
   <front>
     <title abbrev="IKEv2 Cryptographic Algorithms">Algorithm Implementation Requirements and Usage Guidance for IKEv2</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
