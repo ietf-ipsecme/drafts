@@ -537,15 +537,9 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 </t>
                 <t>If a PS payload is found in the message, then the Responder MUST verify 
                 the puzzle solution that it contains. The solution is interpreted as four
-                different keys. The result of using each of them in PRF as described in <xref target="comppuzzleinit"/> 
-                must contain at least the requested number of trailing zero bits (that is also learned from the cookie,
-                as well as the PRF algorithm used in puzzle solution). The Responder SHOULD
-                check all four returned keys. The Responder MAY verify fewer keys (randomly selected 
-                from the four returned), if it wants to save CPU resources. In this case the Initiator has
-                a chance to pass the DDoS protection mechanism spending less resources by finding
-                fewer solutions than required. But since it doesn't know how many and which results the Responder checks, 
-                the chances are small. Nevertheless, the Responder must weigh this possibility
-                against its desire to save CPU resources when making decision how many results to check.
+                different keys. The result of using each of them in the PRF (as described in <xref target="comppuzzleinit"/>) 
+                must contain at least the requested number of trailing zero bits. 
+                The Responder MUST check all the four returned keys.
                 </t>
                 <t>If any checked result contains fewer bits than were requested, it means that 
                 the Initiator spent less resources than expected by the Responder. This request
@@ -718,12 +712,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 <t>Once the message containing a solution to the puzzle is received, 
                 the Responder MUST verify the solution before performing computationlly
                 intensive operations i.e. computing the D-H shared secret
-                and the SK_* keys. The Responder SHOULD verify all the four returned keys.
-                The Responder MAY verify fewer keys (randomly selected from the four returned),
-                as described in <xref target="analyzerequest"/>. The Responder must 
-                weigh the possibility for the Initiator to pass the DDoS protection mechanism
-                spending less power against its desire to save CPU resources when making 
-                decision how many results to check.
+                and the SK_* keys. The Responder MUST verify all the four returned keys.
                 </t>
                 <t>The Responder MUST silently discard the received message 
                 if any checked verification result is not correct (contains insufficient number of trailing zero bits). 
@@ -896,14 +885,6 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         It is RECOMMENDED that the puzzle difficulty be chosen so, that the Responder's load remain close
         to the maximum it can tolerate. It is also RECOMMENDED to dynamically adjust the puzzle difficulty
         in accordance to the current Responder's load.
-        </t>
-        <t> Puzzle verification procedure described in Sections <xref target="analyzerequest" format="counter"/> and 
-        <xref target="receivepuzzle" format="counter"/> 
-        allows the Responder to verify only a randomly selected subset of the returned keys in order
-        to save CPU resources. This gives a chance to the Initiator to reduce the cost of passing the DDoS protection 
-        mechanism by finding fewer solutions than required in hope that the Responder verifies only them.
-        While the chance is small, the Responder must weigh this possibility against its desire to save CPU resources 
-        when making decision how many results to check.
         </t>
         <t> Solving puzzles requires a lot of CPU power, that would increase power consumption. This would influence 
         battery-powered Initiators, e.g. mobile phones or some IoT devices. If puzzles are hard then the required
