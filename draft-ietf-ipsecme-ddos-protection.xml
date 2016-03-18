@@ -283,7 +283,24 @@
             to pass ICV check), then the Responder SHOULD still keep the computed
             SK_* keys, so that if it happened to be an attack, then the malicious
             Initiator cannot get advantage of repeating the attack multiple times on a single IKE SA.
-            The responder can also use puzzles in the IKE_AUTH exchange as decribed in <xref target="ikeauth"/>.</t>
+            The responder can also use puzzles in the IKE_AUTH exchange as decribed in <xref target="ikeauth"/>.
+            </t>
+        </section>
+
+        <section anchor="hashandurl" title="Preventing Attacks using &quot;Hash and URL&quot; Certificate Encoding">
+            <t> In IKEv2 each side may use "Hash and URL" Certificate Encoding to instruct the peer 
+            to retrieve certificates from the specified location (see Section 3.6 of <xref target="RFC7296"/> for details).
+            Malicious initiators can use this feature to mount a DoS attack on responder by providing an URL pointing to a large file
+            possibly containing garbage. While downloading the file the responder consumes CPU, memory and network bandwidth.
+            </t>
+            <t> To prevent this kind of attacks the responder should not blindly download the whole file. 
+            Instead it SHOULD first read the initial few bytes, decode the length of the ASN.1 structure 
+            from these bytes, and then download no more than the decoded number of bytes. Note, that it is always
+            possible to determine the length of ASN.1 structures used in IKEv2 by analyzing the first few bytes,
+            if they are DER-encoded. Implementations SHOULD also apply a configurable hard limit to the number 
+            of pulled bytes and SHOULD provide an ability for an administrator to either completely disable this 
+            feature or to limit its use to a configurable list of trusted URLs.
+            </t>
         </section>
     </section>
 
@@ -919,6 +936,9 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         Responders that allow unauthenticated Initiators to connect must be prepared deal
         with various kinds of DoS attacks even after IKE SA is created. See <xref target="dosprotikesa"/> for details.
         </t>
+        <t> To prevent amplification attacks implementations must strictly follow the retransmission
+        rules described in Section 2.1 of <xref target="RFC7296"/>.
+        </t>
     </section>
 
     <section anchor="iana" title="IANA Considerations">  
@@ -942,7 +962,8 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         of the protocol. In particular, Tero Kivinen suggested the kind of puzzle where the task is to find
         a solution with requested number of zero trailing bits. Yaron Sheffer and Scott Fluhrer suggested
         a way to make puzzle difficulty less erratic by solving several weaker puzles. The authors also thank
-        David Waltermire for his carefull review of the draft and all others who commented the document.
+        David Waltermire for his carefull review of the document, Graham Bartlett for pointing out to the possibility
+        of "Hash & URL" related attack, and all others who commented the document.
         </t>
     </section>
 
