@@ -963,7 +963,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         a solution with requested number of zero trailing bits. Yaron Sheffer and Scott Fluhrer suggested
         a way to make puzzle difficulty less erratic by solving several weaker puzles. The authors also thank
         David Waltermire for his carefull review of the document, Graham Bartlett for pointing out to the possibility
-        of "Hash & URL" related attack, and all others who commented the document.
+        of "Hash &amp; URL" related attack, and all others who commented the document.
         </t>
     </section>
 
