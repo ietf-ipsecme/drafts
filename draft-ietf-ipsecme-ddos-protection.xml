@@ -64,7 +64,7 @@
     <section anchor="introduction" title="Introduction">
         <t> Denial of Service (DoS) attacks have always been considered a serious threat. These attacks are usually
         difficult to defend against since the amount of resources the victim has is always
-        bound (regardless of how high it is) and because some resources are required
+        bounded (regardless of how high it is) and because some resources are required
         for distinguishing a legitimate session from an attack.
         </t>
         <t>The Internet Key Exchange protocol version 2 (IKEv2) described in <xref target="RFC7296"/> includes defense against 
