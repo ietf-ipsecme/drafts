@@ -269,8 +269,8 @@
         <section anchor="resumption" title="Session Resumption">
           <t>When the Responder is under attack, it SHOULD prefer previously authenticated 
           peers who present a Session Resumption ticket <xref target="RFC5723"/>. However, 
-          the Responder SHOULD NOT swich to serving only such Initiators (and thus refuse every IKE_SA_INIT request), 
-          so that legitimate Initiators without the ticket still have chances to connect.
+          the Responder SHOULD NOT serve resumed Initiators exclusively because dropping all IKE_SA_INIT requests would 
+          lock out legitimate Initiators that have no resumption ticket.
           When under attack the Responder SHOULD require Initiators presenting Session Resumption Tickets to pass 
           a return routability check by including the COOKIE notification in the IKE_SESSION_RESUME response message, 
           as described in Section 4.3.2. of <xref target="RFC5723"/>.
