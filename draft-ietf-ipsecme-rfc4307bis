@@ -22,7 +22,7 @@
 <?rfc rfcedstyle="yes"?>
 
 <rfc ipr="trust200902"
-     docName="draft-ietf-ipsecme-rfc4307bis-10"
+     docName="draft-ietf-ipsecme-rfc4307bis-11"
      obsoletes="4307"
      updates="7296"
      category="std">
@@ -269,8 +269,8 @@
           <c>ENCR_3DES</c><c>MAY</c><c>No</c><c/>
           <c>ENCR_DES</c><c>MUST&nbsp;NOT</c><c>No</c><c/>
           <postamble>
-          [1] - This requirement level is for 128-bit keys. 256-bit
-	  keys are at SHOULD. 192-bit keys can safely be ignored.
+          [1] - This requirement level is for both 128-bit keys and 256-bit
+	  keys. 192-bit keys can safely be ignored and are considered MAY.
           [IoT] - This requirement is for interoperability with IoT.
             </postamble>
         </texttable>
