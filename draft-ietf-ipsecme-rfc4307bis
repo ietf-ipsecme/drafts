@@ -270,7 +270,8 @@
           <c>ENCR_DES</c><c>MUST&nbsp;NOT</c><c>No</c><c/>
           <postamble>
           [1] - This requirement level is for both 128-bit keys and 256-bit
-	  keys. 192-bit keys can safely be ignored and are considered MAY.
+	  keys, except for CCM. 192-bit keys can safely be ignored and are considered MAY for all modes, whereas 256-bit keys are
+	  a MAY for ENCR_AES_CCM_8 as well.
           [IoT] - This requirement is for interoperability with IoT.
             </postamble>
         </texttable>
