@@ -79,7 +79,7 @@
     </section>
     <section anchor="mustshouldmay" title="Conventions Used in This Document">
       <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT",
-        "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described
+        "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described
         in <xref target="RFC2119"/>.</t>
     </section>
     <section anchor="analysis" title="The Vulnerability">
