@@ -428,10 +428,10 @@
           is waiting for the first message of the IKE_AUTH exchange from
           the Initiator. At this point the Initiator is not yet
           authenticated, and this fact allows an attacker to perform an
-          attack, described in <xref target="analysis"/>. The attacker can just
-          send garbage in the IKE_AUTH message forcing the
-          Responder to perform costly CPU operations to compute SK_*
-          keys.</t>
+          attack, described in <xref target="analysis"/>. 
+          Instead of sending properly formed and encrypted IKE_AUTH message 
+          the attacker can just send arbitrary data, forcing the Responder 
+          to perform costly CPU operations to compute SK_* keys. </t>
             <t>If the received IKE_AUTH message failed to decrypt
           correctly (or failed to pass ICV check), then the Responder
           SHOULD still keep the computed SK_* keys, so that if it
@@ -448,7 +448,7 @@
             target="RFC7296"/> for details). Malicious initiators can
           use this feature to mount a DoS attack on the responder by
           providing an URL pointing to a large file possibly containing
-          garbage. While downloading the file the responder consumes
+          meaningless bits. While downloading the file the responder consumes
           CPU, memory and network bandwidth. </t>
             <t>To prevent this kind of attack, the responder should not
           blindly download the whole file. Instead, it SHOULD first read
@@ -726,15 +726,15 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     <t>To support crypto agility in case of puzzles, the
               algorithm that is used to compute a puzzle needs to be
               negotiated during the IKE_SA_INIT exchange. The
-              negotiation is performed as follows. The initial request
-              message sent by the Initiator contains an SA payload with
-              the list of transforms the Initiator supports and is
-              willing to use in the IKE SA being established. The
-              Responder parses the received SA payload and finds a
-              mutually supported PRFs. The
-              Responder selects the preferred PRF from the list of 
-              mutually supported ones and includes it into the PUZZLE notification. There is
-              no requirement that the PRF selected for puzzles be the
+              negotiation is performed as follows. The initial request 
+              message from the Initiator contains an SA payload, containing 
+              a list of transforms of different types. Thereby the Initiator asserts 
+              that it supports all transforms from this list and can use any of them 
+              in the IKE SA being established. The Responder parses the received 
+              SA payload and finds a mutually supported of type PRF. 
+              The Responder selects the preferred PRF from the list of 
+              mutually supported ones and includes it into the PUZZLE notification. 
+              There is no requirement that the PRF selected for puzzles be the
               same as the PRF that is negotiated later for use in core
               IKE SA crypto operations. If there are no mutually
               supported PRFs, then IKE SA negotiation will fail anyway and
@@ -851,7 +851,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             PRF such that each result of PRF(Ki,cookie) where i = [1..4]
             has a sufficient number of trailing zero bits. Only the
             content of the COOKIE notification is used in puzzle
-            calculation, i.e. the header of the Notification payload is
+            calculation, i.e. the header of the Notify payload is
             not included.</t>
                 <t>Note, that puzzles in the IKE_AUTH exchange are computed differently
                 than in the IKE_SA_INIT_EXCHANGE. See <xref target="comppuzzleauth"/> for details.
@@ -965,8 +965,8 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
           DoS attack in the IKE_SA_INIT exchange, which is targeted on
           the Responder's memory resources, the goal of this attack is
           to exhaust a Responder's CPU power. The attack is performed by
-          sending the first IKE_AUTH message containing garbage. This
-          costs nothing to the Initiator, but the Responder has to
+          sending the first IKE_AUTH message containing arbitrary data. 
+          This costs nothing to the Initiator, but the Responder has to
           perform relatively costly operations when computing the D-H
           shared secret and deriving SK_* keys to be able to verify
           authenticity of the message. If the Responder doesn't keep the
@@ -979,10 +979,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
           Initiator includes a puzzle solution in the first IKE_AUTH
           request message outside the Encrypted payload, so that the
           Responder is able to verify puzzle solution before computing
-          the D-H shared secret. The difficulty level of the puzzle
-          should be selected so that the Initiator would spend
-          substantially more time to solve the puzzle than the Responder
-          to compute the shared secret. </t>
+          the D-H shared secret. </t>
             <t>The Responder should constantly monitor the amount of the half-open IKE SA
             states that receive IKE_AUTH messages that cannot be decrypted due to 
             integrity check failures. If the percentage of such states is high and 
@@ -1078,10 +1075,10 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 messages without the Puzzle Solution payload.
                 </t>
                 <t>Once the message containing a solution to the puzzle
-            is received, the Responder MUST verify the solution before
-            performing computationlly intensive operations i.e.
-            computing the D-H shared secret and the SK_* keys. The
-            Responder MUST verify all four of the returned keys. </t>
+                is received, the Responder MUST verify the solution before
+                performing computationlly intensive operations i.e.
+                computing the D-H shared secret and the SK_* keys. The
+                Responder MUST verify all four of the returned keys. </t>
                 <t>The Responder MUST silently discard the received message 
                 if any checked verification result is not correct (contains insufficient number of trailing zero bits). 
                 If the Responder successfully verifies the puzzle and calculates the SK_* key, 
@@ -1090,21 +1087,19 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 the retransmissions from the Initiator. In this case
                 the Responder may skip verification of the puzzle solution
                 and ignore the Puzzle Solution payload in the retransmitted 
-                messages.
-                </t>
-                <t>If the Initiator uses IKE Fragmentation, then it is
-            possible, that due to packet loss and/or reordering the
-            Responder could receive non-first IKE Fragment messages
-            before receiving the first one containing the PS payload. In
-            this case the Responder MAY choose to keep the received
-            fragments until the first fragment containing the solution
-            to the puzzle is received. In this case the Responder SHOULD
-            NOT try to verify authenticity of the kept fragments until
-            the first fragment with the PS payload is received and the
-            solution to the puzzle is verified. After successful
-            verification of the puzzle, the Responder can then calculate
-            the SK_* key and verify authenticity of the collected
-            fragments.</t>
+                messages. </t>
+                <t>If the Initiator uses IKE Fragmentation, then it sends all fragments of a message 
+                simultaneously. Due to packets loss and/or reordering it is possible that the Responder 
+                receives subsequent fragments before receiving the first one, that contains 
+                the PS payload. In this case the Responder MAY choose to keep the received
+                fragments until the first fragment containing the solution
+                to the puzzle is received. In this case the Responder SHOULD
+                NOT try to verify authenticity of the kept fragments until
+                the first fragment with the PS payload is received and the
+                solution to the puzzle is verified. After successful
+                verification of the puzzle, the Responder can then calculate
+                the SK_* key and verify authenticity of the collected
+                fragments. </t>
             </section>
         </section>
     </section>
@@ -1132,8 +1127,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 <t>SPI Size (1 octet) - MUST be 0, meaning no Security
               Parameter Index (SPI) is present.</t>
                 <t>Notify Message Type (2 octets) -- MUST be &lt;TBA by
-              IANA&gt;, the value assigned for the PUZZLE
-              notification.</t>
+              IANA&gt;, the value assigned for the PUZZLE notification.</t>
                 <t>PRF (2 octets) -- Transform ID of the PRF algorithm that must be used to solve 
                 the puzzle. Readers should refer to the section "Transform Type 2 - Pseudo-Random 
                 Function Transform IDs" in <xref target="IKEV2-IANA"/> for the list of possible values.
@@ -1282,6 +1276,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
   <back>
     <references title="Normative References"> 
       &rfc2119;
+      &rfc5723;
       &rfc7296;
       &rfc7383;
       <reference anchor="IKEV2-IANA" target="http://www.iana.org/assignments/ikev2-parameters">
@@ -1308,7 +1303,6 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         </front>
         <format type='PDF' target="https://bitcoin.org/bitcoin.pdf" />
       </reference>
-      &rfc5723;
       &rfc7619;
       &rfc7696;
     </references>
