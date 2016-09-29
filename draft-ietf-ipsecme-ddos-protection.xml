@@ -71,7 +71,7 @@
         from an attack. </t>
         <t>The Internet Key Exchange protocol version 2 (IKEv2) described in <xref target="RFC7296"/> includes defense against 
         DoS attacks. In particular, there is a cookie mechanism that allows the IKE Responder
-        to defend itself against DoS attacks from spoofed IP-addresses. However, bot-nets 
+        to defend itself against DoS attacks from spoofed IP-addresses. However, botnets 
         have become widespread, allowing attackers to perform Distributed Denial of Service (DDoS) attacks,
         which are more difficult to defend against. This document presents recommendations to help the Responder 
         counter (D)DoS attacks. It also introduces a new mechanism -- "puzzles" -- that can help accomplish this task.
@@ -297,7 +297,7 @@
           attacks from spoofed IP addresses, since an attacker needs to
           have a routable IP address to return the cookie.</t>
           <t>Attackers that have multiple source IP addresses with
-          return routability, such as in the case of bot-nets, can fill
+          return routability, such as in the case of botnets, can fill
           up a half-open SA table anyway. The cookie mechanism limits
           the amount of allocated state to the number of attackers,
           multiplied by the number of half-open SAs allowed per peer
@@ -604,13 +604,13 @@
         cookie or puzzles be used. At this point the only defensive
         measure is to monitor the number of half-open SAs, and setting a
         soft limit per peer IP or prefix. The soft limit can be set to
-        3-5. If the puzzles are used, the puzzle difficulty should be set to such a level
+        3-5. If the puzzles are used, the puzzle difficulty SHOULD be set to such a level 
         (number of zero-bits) that all legitimate clients can handle it
         without degraded user experience.</t>
       <t>As soon as any kind of attack is detected, either a lot of
         initiations from multiple sources or a lot of initiations from a
         few sources, it is best to begin by requiring stateless cookies
-        from all Initiators. This will This will mitigate attacks based on 
+        from all Initiators. This will mitigate attacks based on 
         IP address spoofing, and help avoid the need to impose a greater
         burden in the form of puzzles on the general population of
         Initiators. This makes the per-node or per-prefix soft limit
@@ -651,12 +651,12 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
             ]]></artwork>
             </figure>
             <t>According to the plan, described in <xref target="plan"
-          />, the IKE Responder should monitor incoming requests to
+          />, the IKE Responder monitors incoming requests to
           detect whether it is under attack. If the Responder learns
           that a (D)DoS attack is likely to be in progress, then its
           actions depend on the volume of the attack. If the volume is
           moderate, then the Responder requests the Initiator to return
-          a cookie. If the volume is so high, that puzzles need to be
+          a cookie. If the volume is high to such an extent that puzzles need to be
           used for defense, then the Responder requests the Initiator to
           solve a puzzle. </t>
             <t>The Responder MAY choose to process some fraction of
@@ -691,7 +691,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     <t>The PUZZLE notification contains the difficulty
               level of the puzzle - the minimum number of trailing zero
               bits that the result of PRF must contain. In diverse
-              environments it is next to impossible for the Responder to
+              environments it is nearly impossible for the Responder to
               set any specific difficulty level that will result in
               roughly the same amount of work for all Initiators,
               because computation power of different Initiators may vary
@@ -706,28 +706,27 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
               difficulty level to 0, unless the attack volume is very
               high.</t>
                     <t>If the Responder sets a non-zero difficulty
-              level, then the level should be determined by analyzing
+              level, then the level SHOULD be determined by analyzing
               the volume of the attack. The Responder MAY set different
               difficulty levels to different requests depending on the
               IP address the request has come from. </t>
                 </section>
                 <section anchor="negotiation" title="Selecting the Puzzle Algorithm">
                     <t>The PUZZLE notification also contains identifier
-              of the algorithm, that must be used by Initiator to
-              compute puzzle.</t> 
+              of the algorithm, that is used by Initiator to compute puzzle. </t> 
                     <t>Cryptographic algorithm agility is considered an
-              important feature for modern protocols (<xref
-                target="RFC7696"/>). Algorithm agility ensures that a
+              important feature for modern protocols <xref
+                target="RFC7696"/>. Algorithm agility ensures that a
               protocol doesn't rely on a single built-in set of
               cryptographic algorithms, but has a means to replace one
-              set with another, and negotiate new algorithms with the
+              set with another and negotiate new algorithms with the
               peer. IKEv2 fully supports cryptographic algorithm agility
               for its core operations. </t>
                     <t>To support crypto agility in case of puzzles, the
               algorithm that is used to compute a puzzle needs to be
               negotiated during the IKE_SA_INIT exchange. The
               negotiation is performed as follows. The initial request 
-              message from the Initiator contains an SA payload, containing 
+              message from the Initiator contains an SA payload containing 
               a list of transforms of different types. Thereby the Initiator asserts 
               that it supports all transforms from this list and can use any of them 
               in the IKE SA being established. The Responder parses the received 
@@ -742,7 +741,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
               Responder returns a NO_PROPOSAL_CHOSEN notification. Note
               that PRF is a mandatory transform type for IKE SA (see
               Sections 3.3.2 and 3.3.3 of <xref target="RFC7296"/>) and
-              at least one transform of this type must always be present
+              at least one transform of this type is always present
               in the SA payload in an IKE_SA_INIT request message. </t>
                 </section>
                 <section anchor="compcookie" title="Generating a Cookie">
@@ -750,7 +749,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
               should be computed in such a manner that the Responder is
               able to learn some important information from the sole
               cookie, when it is later returned back by Initiator. In
-              particular - the Responder should be able to learn the
+              particular - the Responder SHOULD be able to learn the
               following information: <list style="symbols">
                 <t>Whether the puzzle was given to the Initiator or only
                   the cookie was requested.</t>
@@ -767,7 +766,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
                     <t>One possible approach to get this information is
               to encode it in the cookie. The format of such encoding is
               an implementation detail of Responder, as the cookie would
-              remain an opaque blob to the Initiator. If this
+              remain an opaque block of data to the Initiator. If this
               information is encoded in the cookie, then the Responder
               MUST make it integrity protected, so that any intended or
               accidental alteration of this information in the returned
@@ -781,7 +780,7 @@ Cookie = <VersionIDofSecret> | <AdditionalInfo> |
                     </figure>
              <t>Note, that according to the Section 2.6 of <xref target="RFC7296"/>,
              the size of the cookie cannot exceed 64 bytes.</t>
-             <t>Alternatively, the Responder may continue to
+             <t>Alternatively, the Responder may 
               generate a cookie as suggested in Section 2.6 of <xref
                 target="RFC7296"/>, but associate the additional
               information, using local storage identified with the
@@ -794,6 +793,10 @@ Cookie = <VersionIDofSecret> | <AdditionalInfo> |
                     <t>The Responder may also combine these approaches.
               This document doesn't mandate how the Responder learns
               this information from a cookie.</t>
+                    <t>When selecting cookie generation algorithm implementations
+              MUST ensure that an attacker gains no or insignificant benefit 
+              from re-using puzzle solutions in several requests.
+              See <xref target="security"/> for details.</t>
                 </section>
             </section>
             <section anchor="solvepuzzleinit" title="Solving a Puzzle and Returning the Solution">
@@ -842,8 +845,8 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             pseudo-random function PRF find N different keys Ki (where
             i=[1..N]) for that PRF so that the result of PRF(Ki,S) has
             at least the specified number of trailing zero bits. This
-            specification requires that the solution to the puzzle
-            contain 4 different keys (i.e. N=4). </t>
+            specification requires that the puzzle solution 
+            contains 4 different keys (i.e., N=4). </t>
                 <t>In the IKE_SA_INIT exchange it is the cookie that
             plays the role of unpredictable string S. In other words, in
             the IKE_SA_INIT the task for the IKE Initiator is to find
@@ -851,7 +854,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             PRF such that each result of PRF(Ki,cookie) where i = [1..4]
             has a sufficient number of trailing zero bits. Only the
             content of the COOKIE notification is used in puzzle
-            calculation, i.e. the header of the Notify payload is
+            calculation, i.e., the header of the Notify payload is
             not included.</t>
                 <t>Note, that puzzles in the IKE_AUTH exchange are computed differently
                 than in the IKE_SA_INIT_EXCHANGE. See <xref target="comppuzzleauth"/> for details.
@@ -859,7 +862,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
             </section>
             <section anchor="analyzerequest" title="Analyzing Repeated Request">
                 <t>The received request must at least contain a COOKIE
-            notification. Otherwise it is an initial request and it must
+            notification. Otherwise it is an initial request and in this case it MUST
             be processed according to <xref target="ikesainit"/>. First,
             the cookie MUST be checked for validity. If the cookie is
             invalid, then the request is treated as initial and is
@@ -907,7 +910,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 difficulty level it can afford, then the priority of the request is calculated
                 based on the following considerations:
                 <list style="symbols">
-                    <t>The Responder must take the smallest number of
+                    <t>The Responder MUST take the smallest number of
                 trailing zero bits among the checked results and count
                 it as the number of zero bits the Initiator solved
                 for.</t>
@@ -980,7 +983,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
           request message outside the Encrypted payload, so that the
           Responder is able to verify puzzle solution before computing
           the D-H shared secret. </t>
-            <t>The Responder should constantly monitor the amount of the half-open IKE SA
+            <t>The Responder constantly monitors the amount of the half-open IKE SA
             states that receive IKE_AUTH messages that cannot be decrypted due to 
             integrity check failures. If the percentage of such states is high and 
             it takes an essential fraction of Responder's computing power to 
@@ -1010,7 +1013,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                     <t>Note, that since puzzles in the IKE_AUTH exchange
               are only allowed to be used if they were used in the
               preceding IKE_SA_INIT exchange, the Responder would be
-              able to estimate the computational power of the Initiator
+              able to roughly estimate the computational power of the Initiator
               and select the difficulty level accordingly. Unlike
               puzzles in the IKE_SA_INIT, the requested difficulty level
               for IKE_AUTH puzzles MUST NOT be zero. In other words, the
@@ -1027,13 +1030,14 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 </section>
             </section>
             <section anchor="solvepuzzleauth" title="Solving Puzzle and Returning the Solution">
-                <t>If the IKE_SA_INIT response message contains the
+                <t>If the IKE_SA_INIT regular response message (i.e.
+            the message containing SA, KE, NONCE payloads) contains the
             PUZZLE notification and the Initiator supports puzzles, it
             MUST solve the puzzle. Note, that puzzle construction in the
             IKE_AUTH exchange differs from the puzzle construction in
             the IKE_SA_INIT exchange and is described in <xref
               target="comppuzzleauth"/>. Once the puzzle is solved the
-            Initiator sends the IKE_AUTH request message, containing the
+            Initiator sends the IKE_AUTH request message containing the
             Puzzle Solution payload. </t>
                 <figure align="center">
                     <artwork align="left"><![CDATA[
@@ -1076,7 +1080,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
                 </t>
                 <t>Once the message containing a solution to the puzzle
                 is received, the Responder MUST verify the solution before
-                performing computationlly intensive operations i.e.
+                performing computationlly intensive operations i.e.,
                 computing the D-H shared secret and the SK_* keys. The
                 Responder MUST verify all four of the returned keys. </t>
                 <t>The Responder MUST silently discard the received message 
@@ -1128,7 +1132,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
               Parameter Index (SPI) is present.</t>
                 <t>Notify Message Type (2 octets) -- MUST be &lt;TBA by
               IANA&gt;, the value assigned for the PUZZLE notification.</t>
-                <t>PRF (2 octets) -- Transform ID of the PRF algorithm that must be used to solve 
+                <t>PRF (2 octets) -- Transform ID of the PRF algorithm that MUST be used to solve 
                 the puzzle. Readers should refer to the section "Transform Type 2 - Pseudo-Random 
                 Function Transform IDs" in <xref target="IKEV2-IANA"/> for the list of possible values.
                 </t>
@@ -1189,16 +1193,20 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         requirement to minimize the latency for legitimate Initiators
         with making things difficult for attackers. A good rule of thumb
         is for taking about 1 second to solve the puzzle. A typical
-        Initiator or bot-net member in 2014 can perform slightly less
-        than a million hashes per second per core, so setting the
-        difficulty level to n=20 is a good compromise. It should be
+        Initiator or botnet member at the time this document is written can perform 
+        slightly less than a million hashes per second per core, so setting the
+        number of zero bits to 20 is a good compromise. It should be
         noted that mobile Initiators, especially phones are considerably
         weaker than that. Implementations should allow administrators to
         set the difficulty level, and/or be able to set the difficulty
         level dynamically in response to load.</t>
-      <t>Initiators should set a maximum difficulty level beyond which
+      <t>Initiators SHOULD set a maximum difficulty level beyond which
         they won't try to solve the puzzle and log or display a failure
         message to the administrator or user.</t>
+      <t>Until widespread adoption of puzzles most Initiators will
+        ignore them, as will definitely do attackers. For the puzzles to become 
+        a really powerfull defense measure against DDoS attacks they must
+        be supported by the majority of legitimate clients. </t>
     </section>
 
     <section anchor="security" title="Security Considerations">
@@ -1220,6 +1228,53 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         maximum it can tolerate. It is also RECOMMENDED to dynamically
         adjust the puzzle difficulty in accordance to the current
         Responder's load. </t>
+
+        <t>If the cookie is generated as suggested in Section 2.6 of 
+        <xref target="RFC7296"/>, then an attacker can use the same 
+        SPIi and the same Ni for several requests from the same IPi. This will result 
+        in generating the same cookies for these requests until the Responder
+        changes the value of its cookie generation secret. Since
+        the cookies are used as an input data for puzzles in the IKE_SA_INIT exchange, 
+        generating same cookies allows the attacker to re-use puzzle solution,
+        thus bypassing proof of work requirement. Note, that the attacker 
+        can get only limited benefit from this situation - once
+        the half-open SA is created by the Responder all the subsequent
+        initial requests with the same IPi and SPIi will be treated
+        as retransmissions and discarded by the Responder. However,
+        once this half-open SA is expired and deleted, the attacker 
+        can create a new one for free if the Responder haven't changed
+        its cookie generation secret yet. </t>
+
+        <t>The Responder can use various countermeasures to completely
+        eliminate or mitigate this scenatio. First, the Responder 
+        can change its cookie generation secret frequently especially if
+        under attack, as recommended in the Section 2.6 of <xref target="RFC7296"/>.
+        For example, if the Responder keeps two values of the secret (current and previous) and 
+        the secret lifetime is no more than a half of the current
+        half-open SA retention time (see <xref target="timelimit"/>),
+        then the attacker cannot get benefit from re-using puzzle solution.
+        However, short cookie generation secret lifetime could have negative
+        consequence on weak legitimate Initiators, since it could take
+        too long for them to solve puzzles and their solutons
+        would be discarded if the cookie generation secret has been already
+        changed few times. </t>
+
+        <t>Another approach for the Responder is to modify cookie generation
+        algorithm in such a way, that the generated cookies are always different or
+        are repeated only within short time period. If the Responder 
+        includes timestamp in the &lt;AdditionalInfo&gt; as suggested in <xref target="compcookie"/>,
+        then the cookies will repeat only within short time interval equal to timestamp resolution.
+        Another approach for the Responder is to maintain a global counter 
+        that is incremented every time a cookie is generated and include this 
+        counter in the &lt;AdditionalInfo&gt;. This will make all cookies different. </t>
+
+        <t>Implementations MUST use one of the above (or some other)
+        countermeasures to completely eliminate or make insignificant
+        the possible benefit an attacker can get from re-using puzzle solutions.
+        Note, this issue doesn't exist in IKE_AUTH puzzles (<xref target="ikeauth"/>)
+        since the puzzles in this case are always different if the Responder 
+        generates SPIr and Nr randomly in accordance with <xref target="RFC7296"/>. </t>
+
         <t>Solving puzzles requires a lot of CPU power that increases
         power consumption. This additional power consumption can
         negatively affect battery-powered Initiators, e.g. mobile phones
@@ -1230,6 +1285,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         selecting which percentage of Initiators are allowed to reject
         solving puzzles. See <xref target="analyzerequest"/> for
         details. </t>
+
         <t>If the Initiator uses NULL Authentication <xref
           target="RFC7619"/> then its identity is never verified. This
         condition may be used by attackers to perform a DoS attack after
@@ -1237,6 +1293,7 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         Initiators to connect must be prepared to deal with various
         kinds of DoS attacks even after the IKE SA is created. See <xref
           target="dosprotikesa"/> for details. </t>
+
         <t>To prevent amplification attacks implementations must
         strictly follow the retransmission rules described in Section
         2.1 of <xref target="RFC7296"/>.</t>
