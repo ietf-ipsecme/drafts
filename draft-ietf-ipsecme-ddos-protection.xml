@@ -368,7 +368,7 @@
           algorithm is PRF-HMAC-SHA256, and the required number of zero
           bits is 18. After successively trying a bunch of keys, the
           Initiator finds the following four 3-octet keys that work:</t>
-          <texttable anchor="tbl0" title="Three solutions for 18-bit puzzle">
+          <texttable anchor="tbl0" title="Four solutions for the 18-bit puzzle">
             <ttcol align="center">Key</ttcol>
             <ttcol align="left">Last 32 Hex PRF Digits</ttcol>
             <ttcol align="center"># 0-bits</ttcol>
@@ -602,7 +602,7 @@
         detection.</t>
       <t>When there is no general DDoS attack, it is suggested that no
         cookie or puzzles be used. At this point the only defensive
-        measure is to monitor the number of half-open SAs, and setting a
+        measure is to monitor the number of half-open SAs, and set a
         soft limit per peer IP or prefix. The soft limit can be set to
         3-5. If the puzzles are used, the puzzle difficulty SHOULD be set to such a level 
         (number of zero-bits) that all legitimate clients can handle it
@@ -712,7 +712,7 @@ HDR, [N(COOKIE),] SA, KE, Ni, [V+][N+]   -->
               IP address the request has come from. </t>
                 </section>
                 <section anchor="negotiation" title="Selecting the Puzzle Algorithm">
-                    <t>The PUZZLE notification also contains identifier
+                    <t>The PUZZLE notification also contains an identifier
               of the algorithm, that is used by Initiator to compute puzzle. </t> 
                     <t>Cryptographic algorithm agility is considered an
               important feature for modern protocols <xref
@@ -839,7 +839,7 @@ HDR, N(COOKIE), [PS,] SA, KE, Ni, [V+][N+]   -->
                 </figure>
             </section>
             <section anchor="comppuzzleinit" title="Computing a Puzzle">
-                <t>General principals of constructing puzzles in IKEv2
+                <t>General principles of constructing puzzles in IKEv2
             are described in <xref target="puzzles"/>. They can be
             summarized as follows: given unpredictable string S and
             pseudo-random function PRF find N different keys Ki (where
@@ -1203,8 +1203,8 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
       <t>Initiators SHOULD set a maximum difficulty level beyond which
         they won't try to solve the puzzle and log or display a failure
         message to the administrator or user.</t>
-      <t>Until widespread adoption of puzzles most Initiators will
-        ignore them, as will definitely do attackers. For the puzzles to become 
+      <t>Until the widespread adoption of puzzles happens, most Initiators will
+        ignore them, as will all attackers. For puzzles to become 
         a really powerfull defense measure against DDoS attacks they must
         be supported by the majority of legitimate clients. </t>
     </section>
@@ -1266,13 +1266,13 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         then the cookies will repeat only within short time interval equal to timestamp resolution.
         Another approach for the Responder is to maintain a global counter 
         that is incremented every time a cookie is generated and include this 
-        counter in the &lt;AdditionalInfo&gt;. This will make all cookies different. </t>
+        counter in the &lt;AdditionalInfo&gt;. This will make every cookies unique. </t>
 
         <t>Implementations MUST use one of the above (or some other)
         countermeasures to completely eliminate or make insignificant
         the possible benefit an attacker can get from re-using puzzle solutions.
         Note, this issue doesn't exist in IKE_AUTH puzzles (<xref target="ikeauth"/>)
-        since the puzzles in this case are always different if the Responder 
+        since the puzzles in IKE_AUTH are always unique if the Responder 
         generates SPIr and Nr randomly in accordance with <xref target="RFC7296"/>. </t>
 
         <t>Solving puzzles requires a lot of CPU power that increases
@@ -1325,7 +1325,8 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
         puzles. The authors also thank David Waltermire and Paul Wouters
         for their careful reviews of the document, Graham Bartlett for
         pointing out to the possibility of the "Hash &amp; URL" related
-        attack, and all others who commented the document.</t>
+        attack, Stephen Farrell for catching the repeated cookie issue,
+        and all others who commented the document.</t>
     </section>
 
   </middle>
@@ -1366,3 +1367,4 @@ HDR, PS, SK {IDi, [CERT,] [CERTREQ,]
     <!-- ====================================================================== -->
   </back>
 </rfc>
+
