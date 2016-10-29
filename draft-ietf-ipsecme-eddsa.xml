@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type='text/xsl' href='./rfc2629.xslt' ?>
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY rfc2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY rfc7296 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7296.xml">
+<!ENTITY rfc7427 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7427.xml">
+]>
+
+<?rfc toc="yes"?>
+<?rfc strict="yes" ?>
+<?rfc linkmailto="yes" ?>
+<?rfc symrefs="yes"?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<?rfc sortrefs="no" ?>
+<?rfc rfcedstyle="yes"?>
+
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-eddsa-xx" category="std">
+  <front>
+    <title abbrev="EdDSA in IKEv2">Using Edwards-curve Digital Signature Algorithm (EdDSA) in the Internet Key Exchange (IKEv2)</title>
+    <author initials="Y." surname="Nir" fullname="Yoav Nir">
+      <organization abbrev="Check Point">Check Point Software Technologies Ltd.</organization>
+      <address>
+        <postal>
+          <street>5 Hasolelim st.</street>
+          <city>Tel Aviv</city>
+          <code>6789735</code>
+          <country>Israel</country>
+        </postal>
+        <email>ynir.ietf@gmail.com</email>
+      </address>
+    </author>
+    <date year="2016"/>
+    <area>Security</area>
+    <workgroup>IPSecME Working Group</workgroup>
+    <keyword>Internet-Draft</keyword>
+    <abstract>
+      <t> This document describes the use of the Edwards-curve digital 
+        signature algorithm in the IKEv2 protocol.</t>
+    </abstract>
+  </front>
+  <middle>
+    <!-- ================================================================= -->
+    <section anchor="introduction" title="Introduction">
+      <t> The Internet Key Exchange protocol <xref target="RFC7296" /> can use 
+        arbitrary signature algorithms as described in 
+        <xref target="RFC7427" />.  The latter RFC defines the 
+        SIGNATURE_HASH_ALGORITHMS notification where each side of the IKE 
+        negotiation lists its supported hash algorithms. This assumes that all 
+        signature schemes involve a hashing phase followed by a signature 
+        phase. This made sense because most signature algorithms either cannot 
+        sign messages bigger than their key or truncate messages bigger than 
+        their key.</t>
+      <t> EdDSA (<xref target="I.D-eddsa" />) defines signature methods that do 
+        not require pre-hashing of the message. Unlike other methods, these 
+        accept arbitrary-sized messages, so no pre-hashing is required. These 
+        methods are called Ed25519 and Ed448, which respectively use the 
+        Edwards 25519 and the Edwards 448 ("Goldilocks") curves. Although that 
+        document also defines pre-hashed versions of these algorithm, those 
+        versions are not recommended for protocols where the entire 
+        to-be-signed message is available at once.</t>
+      <t> EdDSA defines the binary format of the signatures that should be used 
+        in the "Signature Value" field of the Authentication Data Format in 
+        section 3. The CURDLE PKIX document (<xref target="I.D-curdle-pkix"/>) 
+        defines the object identifiers (OIDs) for these signature methods. For 
+        convenience, these OIDs are repeated in <xref target="the_oids"/>.</t>
+      <t> In order to signal within IKE that no hashing needs to be done, we 
+        define a new value has in the SIGNATURE_HASH_ALGORITHMS notification, 
+        one that indicates that no hashing is performed.</t> 
+      <section anchor="mustshouldmay" title="Conventions Used in This Document">
+        <t> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", 
+          "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this 
+          document are to be interpreted as described in 
+          <xref target="RFC2119"/>.</t>
+      </section>
+    </section>
+    <section anchor="identity" title='The "Identity" Hash Identifier'>
+      <t> This document defines a new value called "Identity" (value TBA by 
+        IANA) in the hash algorithm registry for use in the 
+        SIGNATURE_HASH_ALGORITHMS notification. Inserting this new value into 
+        the notification indicates that the receiver supports at least one 
+        signature algorithm that accepts arbitrary-sized messages such as 
+        Ed25519 and Ed448.</t>
+      <t> Ed25519 and Ed448 are only defined with the Identity hash, and MUST 
+        NOT be sent to a receiver that has not indicated support for the 
+        "Identity" hash.</t> 
+      <t> The pre-hashed versions of Ed25519 and Ed448 (Ed25519ph and Ed448ph 
+        respectively) SHOULD NOT be used in IKE.</t>
+    </section>
+    <section anchor="security" title="Security Considerations">
+      <t> The new "Identity" value is needed only for signature algorithms that 
+        accept an arbitrary-sized input. It MUST NOT be used if none of the 
+        supported algorithms has this property. On the other hand there is no 
+        good reason to pre-hash the inputs where the signature algorithm either 
+        does not require it or performs a hash internally. For this reason 
+        implementations SHOULD have the "Identity" value in the 
+        SIGNATURE_HASH_ALGORITHMS notification when they support EdDSA. 
+        Implementations SHOULD NOT have other hash algorithms in the 
+        notification if all signature algorithms have this property.</t>
+    </section>
+    <section anchor="iana" title="IANA Considerations">  
+      <t>IANA is requested to assign a new value from the "IKEv2 Hash 
+        Algorithms" registry with name "Identity" and this document as 
+        reference. Since the value zero was reserved by RFC 7427 and this 
+        "Identity" hash is no hash at all, assigning the value zero to Identity 
+        seems appropriate.</t>
+    </section>
+  </middle>
+  <!-- ====================================================================== -->
+  <back>
+    <references title="Normative References"> 
+      &rfc2119;
+      &rfc7296;
+      &rfc7427;
+      <reference anchor="I.D-eddsa" target="https://tools.ietf.org/html/draft-irtf-cfrg-eddsa-08.html">
+        <front>
+          <title>Edwards-curve Digital Signature Algorithm (EdDSA)</title>
+          <author initials="S." surname="Josefsson" fullname="Simon Josefsson">
+            <organization />
+          </author>
+          <author initials="I." surname="Liusvaara" fullname="Ilari Liusvaara">
+            <organization />
+          </author>
+          <date month="August" year="2016" />
+        </front>
+      </reference>
+      <reference anchor="I.D-curdle-pkix" target="https://tools.ietf.org/html/draft-ietf-curdle-pkix-01">
+        <front>
+          <title>Algorithm Identifiers for Ed25519, Ed25519ph, Ed448, Ed448ph, X25519 and X448 for use in the Internet X.509 Public Key Infrastructure</title>
+          <author initials="S." surname="Josefsson" fullname="Simon Josefsson">
+            <organization />
+          </author>
+          <author initials="J." surname="Schaad" fullname="Jim Schaad">
+            <organization />
+          </author>
+          <date month="August" year="2016" />
+        </front>
+      </reference>      
+    </references>
+    <!-- ====================================================================== -->
+    <section anchor="the_oids" title="ASN.1 Objects">
+      <t> The normative reference for the ASN.1 objects for Ed25519 and Ed448 
+        is in <xref target="I.D-curdle-pkix"/>. They are repeated below for 
+        convenience.</t>
+      <section anchor="oid_ed25519" title="ASN.1 Object for Ed25519">
+        <t>id-Ed25519   OBJECT IDENTIFIER ::= { 1.3.101.112 }</t>
+        <t>Parameters are absent. Length is 7 bytes.</t>
+        <t>Binary encoding: 3005 0603 2B65 70</t>
+      </section>
+      <section anchor="oid_ed448" title="ASN.1 Object for Ed448">
+        <t>id-Ed448     OBJECT IDENTIFIER ::= { 1.3.101.113 }</t>
+        <t>Parameters are absent. Length is 7 bytes.</t>
+        <t>Binary encoding: 3005 0603 2B65 71</t>
+      </section>
+    </section>
+  </back>
+</rfc>
+
