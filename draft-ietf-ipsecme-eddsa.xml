@@ -104,9 +104,7 @@
     <section anchor="iana" title="IANA Considerations">  
       <t>IANA is requested to assign a new value from the "IKEv2 Hash 
         Algorithms" registry with name "Identity" and this document as 
-        reference. Since the value zero was reserved by RFC 7427 and this 
-        "Identity" hash is no hash at all, assigning the value zero to Identity 
-        seems appropriate.</t>
+        reference.</t>
     </section>
   </middle>
   <!-- ====================================================================== -->
