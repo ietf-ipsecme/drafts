@@ -5,6 +5,7 @@
 <!ENTITY rfc2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY rfc7296 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7296.xml">
 <!ENTITY rfc7427 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.7427.xml">
+<!ENTITY rfc8032 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8032.xml">
 ]>
 
 <?rfc toc="yes"?>
@@ -16,7 +17,7 @@
 <?rfc sortrefs="no" ?>
 <?rfc rfcedstyle="yes"?>
 
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-eddsa-xx" category="std">
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-eddsa-01" category="std">
   <front>
     <title abbrev="EdDSA in IKEv2">Using Edwards-curve Digital Signature Algorithm (EdDSA) in the Internet Key Exchange (IKEv2)</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
@@ -31,7 +32,7 @@
         <email>ynir.ietf@gmail.com</email>
       </address>
     </author>
-    <date year="2016"/>
+    <date year="2017"/>
     <area>Security</area>
     <workgroup>IPSecME Working Group</workgroup>
     <keyword>Internet-Draft</keyword>
@@ -52,14 +53,15 @@
         phase. This made sense because most signature algorithms either cannot 
         sign messages bigger than their key or truncate messages bigger than 
         their key.</t>
-      <t> EdDSA (<xref target="I.D-eddsa" />) defines signature methods that do 
+      <t> EdDSA (<xref target="RFC8032" />) defines signature methods that do 
         not require pre-hashing of the message. Unlike other methods, these 
         accept arbitrary-sized messages, so no pre-hashing is required. These 
         methods are called Ed25519 and Ed448, which respectively use the 
         Edwards 25519 and the Edwards 448 ("Goldilocks") curves. Although that 
         document also defines pre-hashed versions of these algorithm, those 
         versions are not recommended for protocols where the entire 
-        to-be-signed message is available at once.</t>
+        to-be-signed message is available at once. See section 8.5 or RFC 8032 
+        for that recommendation.</t>
       <t> EdDSA defines the binary format of the signatures that should be used 
         in the "Signature Value" field of the Authentication Data Format in 
         section 3. The CURDLE PKIX document (<xref target="I.D-curdle-pkix"/>) 
@@ -102,9 +104,7 @@
     <section anchor="iana" title="IANA Considerations">  
       <t>IANA is requested to assign a new value from the "IKEv2 Hash 
         Algorithms" registry with name "Identity" and this document as 
-        reference. Since the value zero was reserved by RFC 7427 and this 
-        "Identity" hash is no hash at all, assigning the value zero to Identity 
-        seems appropriate.</t>
+        reference.</t>
     </section>
   </middle>
   <!-- ====================================================================== -->
@@ -113,19 +113,8 @@
       &rfc2119;
       &rfc7296;
       &rfc7427;
-      <reference anchor="I.D-eddsa" target="https://tools.ietf.org/html/draft-irtf-cfrg-eddsa-08.html">
-        <front>
-          <title>Edwards-curve Digital Signature Algorithm (EdDSA)</title>
-          <author initials="S." surname="Josefsson" fullname="Simon Josefsson">
-            <organization />
-          </author>
-          <author initials="I." surname="Liusvaara" fullname="Ilari Liusvaara">
-            <organization />
-          </author>
-          <date month="August" year="2016" />
-        </front>
-      </reference>
-      <reference anchor="I.D-curdle-pkix" target="https://tools.ietf.org/html/draft-ietf-curdle-pkix-01">
+      &rfc8032;
+      <reference anchor="I.D-curdle-pkix" target="https://tools.ietf.org/html/draft-ietf-curdle-pkix-03">
         <front>
           <title>Algorithm Identifiers for Ed25519, Ed25519ph, Ed448, Ed448ph, X25519 and X448 for use in the Internet X.509 Public Key Infrastructure</title>
           <author initials="S." surname="Josefsson" fullname="Simon Josefsson">
@@ -134,7 +123,7 @@
           <author initials="J." surname="Schaad" fullname="Jim Schaad">
             <organization />
           </author>
-          <date month="August" year="2016" />
+          <date month="November" year="2016" />
         </front>
       </reference>      
     </references>
@@ -156,4 +145,3 @@
     </section>
   </back>
 </rfc>
-
