@@ -17,16 +17,16 @@
 <?rfc sortrefs="no" ?>
 <?rfc rfcedstyle="yes"?>
 
-<rfc ipr="trust200902" docName="draft-ietf-ipsecme-eddsa-01" category="std">
+<rfc ipr="trust200902" docName="draft-ietf-ipsecme-eddsa-04" category="std">
   <front>
     <title abbrev="EdDSA in IKEv2">Using Edwards-curve Digital Signature Algorithm (EdDSA) in the Internet Key Exchange (IKEv2)</title>
     <author initials="Y." surname="Nir" fullname="Yoav Nir">
-      <organization abbrev="Check Point">Check Point Software Technologies Ltd.</organization>
+      <organization >Dell EMC</organization>
       <address>
         <postal>
-          <street>5 Hasolelim st.</street>
-          <city>Tel Aviv</city>
-          <code>6789735</code>
+          <street>9 Andrei Sakharov St</street>
+          <city>Haifa</city>
+          <code>3190500</code>
           <country>Israel</country>
         </postal>
         <email>ynir.ietf@gmail.com</email>
@@ -68,7 +68,7 @@
         defines the object identifiers (OIDs) for these signature methods. For 
         convenience, these OIDs are repeated in <xref target="the_oids"/>.</t>
       <t> In order to signal within IKE that no hashing needs to be done, we 
-        define a new value has in the SIGNATURE_HASH_ALGORITHMS notification, 
+        define a new value in the SIGNATURE_HASH_ALGORITHMS notification, 
         one that indicates that no hashing is performed.</t> 
       <section anchor="mustshouldmay" title="Conventions Used in This Document">
         <t> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", 
@@ -78,8 +78,8 @@
       </section>
     </section>
     <section anchor="identity" title='The "Identity" Hash Identifier'>
-      <t> This document defines a new value called "Identity" (value TBA by 
-        IANA) in the hash algorithm registry for use in the 
+      <t> This document defines a new value called "Identity" (value is 5) in 
+        the hash algorithm registry for use in the 
         SIGNATURE_HASH_ALGORITHMS notification. Inserting this new value into 
         the notification indicates that the receiver supports at least one 
         signature algorithm that accepts arbitrary-sized messages such as 
@@ -88,23 +88,25 @@
         NOT be sent to a receiver that has not indicated support for the 
         "Identity" hash.</t> 
       <t> The pre-hashed versions of Ed25519 and Ed448 (Ed25519ph and Ed448ph 
-        respectively) SHOULD NOT be used in IKE.</t>
+        respectively) MUST NOT be used in IKE.</t>
     </section>
     <section anchor="security" title="Security Considerations">
       <t> The new "Identity" value is needed only for signature algorithms that 
         accept an arbitrary-sized input. It MUST NOT be used if none of the 
-        supported algorithms has this property. On the other hand there is no 
-        good reason to pre-hash the inputs where the signature algorithm either 
-        does not require it or performs a hash internally. For this reason 
-        implementations SHOULD have the "Identity" value in the 
-        SIGNATURE_HASH_ALGORITHMS notification when they support EdDSA. 
-        Implementations SHOULD NOT have other hash algorithms in the 
-        notification if all signature algorithms have this property.</t>
+        supported and configured algorithms have this property. On the other 
+        hand there is no good reason to pre-hash the inputs where the signature 
+        algorithm has that property. For this reason implementations MUST have 
+        the "Identity" value in the SIGNATURE_HASH_ALGORITHMS notification when 
+        EdDSA is supported and configured. Implementations SHOULD NOT have 
+        other hash algorithms in the notification if all supported and 
+        configured signature algorithms have this property.</t>
     </section>
     <section anchor="iana" title="IANA Considerations">  
-      <t>IANA is requested to assign a new value from the "IKEv2 Hash 
-        Algorithms" registry with name "Identity" and this document as 
-        reference.</t>
+      <t> IANA has assigned the value 5 for the algorithm with the name 
+        "Identity" in the "IKEv2 Hash Algorithms" registry with this draft
+        as reference.</t>
+      <t> Upon publication of this document IANA is requested to update the entry
+        with this document as reference.</t>
     </section>
   </middle>
   <!-- ====================================================================== -->
@@ -114,7 +116,7 @@
       &rfc7296;
       &rfc7427;
       &rfc8032;
-      <reference anchor="I.D-curdle-pkix" target="https://tools.ietf.org/html/draft-ietf-curdle-pkix-03">
+      <reference anchor="I.D-curdle-pkix" target="https://tools.ietf.org/html/draft-ietf-curdle-pkix-06">
         <front>
           <title>Algorithm Identifiers for Ed25519, Ed25519ph, Ed448, Ed448ph, X25519 and X448 for use in the Internet X.509 Public Key Infrastructure</title>
           <author initials="S." surname="Josefsson" fullname="Simon Josefsson">
@@ -123,7 +125,7 @@
           <author initials="J." surname="Schaad" fullname="Jim Schaad">
             <organization />
           </author>
-          <date month="November" year="2016" />
+          <date month="September" year="2017" />
         </front>
       </reference>      
     </references>
